@@ -6,6 +6,31 @@ function MacGetComputerName()
 	return strpart(computernamestring, 0, strlen(computernamestring)-1)
 endfunction
 
+" these two functions allow the user to toggle between standard comments and Doxygen comments
+function EnableDoxygenComments()
+	let b:zcm_doxified = 1
+	set syn+=.doxygen
+endfunction
+function DisableDoxygenComments()
+	let b:zcm_doxified = 0
+	set syn-=.doxygen
+endfunction
+
+function ToggleDoxygenComments()
+	if b:zcm_doxified == 0
+		call EnableDoxygenComments()
+	else
+		call DisableDoxygenComments()
+	endif
+endfunction
+
+" I just so happen to like Doxygen-style comments, so I'm going activate them by default here
+" (but, of course, only for compatible files with an autocommand)
+aug zcm_doxygen
+au zcm_doxygen BufEnter * let b:zcm_doxified = 0
+au zcm_doxygen BufEnter *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+aug END
+
 " window settings for gvim
 if has("gui_running")
 	set lines=50
@@ -17,11 +42,24 @@ if has("gui_running")
 		elseif MacGetComputerName() == "Bliss"
 			winp 461 262
 		endif
+	elseif has("gui_win32")
+		" screw it, on windows we just maximize
+		aug zcm_windows_maximize
+		au zcm_windows_maximize GUIEnter * simalt ~x
+		aug END
+		" also, kill win32 gvim's toolbar
+		set guioptions-=T
+		" and the tearoff menu items
+		set guioptions-=t
+		" and the standard menus themselves
+		set guioptions-=m
+		" and start from our My Documents (or other home) directory
+		cd ~
 	endif
 endif
 
 " Disable the audible and visual bells
-set vb t_vb=
+au VimEnter * set vb t_vb=
 
 set backspace=2
 syntax enable
@@ -62,6 +100,7 @@ inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F5> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
+nnoremap <F6> :call ToggleDoxygenComments()<CR>
 
 " always show the status line
 " set laststatus=2
