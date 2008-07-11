@@ -19,6 +19,10 @@ endfunction
 function ToggleDoxygenComments()
 	if b:zcm_doxified == 0
 		call EnableDoxygenComments()
+		" this should be defined in the zcm_folding au group
+		if b:open_all_folds_bfbn == 1
+			silent! %foldo!
+		endif
 	else
 		call DisableDoxygenComments()
 	endif
@@ -27,8 +31,8 @@ endfunction
 " I just so happen to like Doxygen-style comments, so I'm going activate them by default here
 " (but, of course, only for compatible files with an autocommand)
 aug zcm_doxygen
-au zcm_doxygen BufEnter * let b:zcm_doxified = 0
-au zcm_doxygen BufEnter *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
+au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
 aug END
 
 " window settings for gvim
@@ -55,6 +59,10 @@ if has("gui_running")
 		set guioptions-=m
 		" and start from our My Documents (or other home) directory
 		cd ~
+		" set a font?
+		set gfn=Lucida_Console:h10:cANSI
+		" find the ctags utility
+		let Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
 	endif
 endif
 
@@ -65,7 +73,22 @@ set backspace=2
 syntax enable
 set number
 set autoindent
-autocmd BufNewFile,BufRead *.java compiler javac
+au BufNewFile,BufRead *.java compiler javac
+filetype on
+filetype indent on
+
+" folding options
+set foldcolumn=3
+set fdn=2
+aug zcm_folding
+au zcm_folding BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
+au zcm_folding BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
+au zcm_folding BufNewFile,BufRead * silent! %foldo!
+au zcm_folding BufNewFile,BufRead * let b:open_all_folds_bfbn=1
+au zcm_folding WinEnter __Tag_List__ set foldcolumn=0
+au zcm_folding Syntax java* syn region myfold start="{" end="}" transparent fold
+au zcm_folding Syntax java* syn sync fromstart
+aug END
 
 let s:cpo_save=&cpo
 set cpo&vim
@@ -100,7 +123,17 @@ inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F5> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
-nnoremap <F6> :call ToggleDoxygenComments()<CR>
+nnoremap <C-F6> :call ToggleDoxygenComments()<CR>
+nnoremap <F6> :TlistToggle<CR>
+
+" taglist.vim options
+let Tlist_Compact_Format=1
+"let Tlist_Auto_Open=1
+let Tlist_Process_File_Always=1
+let Tlist_Exit_OnlyWindow=1
+hi! link TagListFileName VisualNOS
+
+set ut=10
 
 " always show the status line
 " set laststatus=2
