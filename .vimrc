@@ -20,20 +20,13 @@ function ToggleDoxygenComments()
 	if b:zcm_doxified == 0
 		call EnableDoxygenComments()
 		" this should be defined in the zcm_folding au group
-		if b:open_all_folds_bfbn == 1
-			silent! %foldo!
-		endif
+		"if b:open_all_folds_bfbn == 1
+		"	silent! %foldo!
+		"endif
 	else
 		call DisableDoxygenComments()
 	endif
 endfunction
-
-" I just so happen to like Doxygen-style comments, so I'm going activate them by default here
-" (but, of course, only for compatible files with an autocommand)
-aug zcm_doxygen
-au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
-au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
-aug END
 
 " window settings for gvim
 if has("gui_running")
@@ -89,6 +82,16 @@ au zcm_folding WinEnter __Tag_List__ set foldcolumn=0
 au zcm_folding Syntax java* syn region myfold start="{" end="}" transparent fold
 au zcm_folding Syntax java* syn sync fromstart
 aug END
+
+" I just so happen to like Doxygen-style comments, so I'm going activate them by default here
+" (but, of course, only for compatible files with an autocommand)
+aug zcm_doxygen
+au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
+au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+aug END
+
+" netrw Explore sort options...
+let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
 
 let s:cpo_save=&cpo
 set cpo&vim
