@@ -8,6 +8,7 @@ if(has("gui_win32"))
     " A very, very special case...
     source F:\Users\dremelofdeath\.vimrc
   else
+    " Usually we'll just source the user's home vimrc.
     source $HOME\.vimrc
   endif
 else
