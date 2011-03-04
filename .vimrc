@@ -137,7 +137,7 @@ if has("gui_running")
     " set a font? (I'm cool with not doing this right now in Windows.)
     " set gfn=Lucida_Console:h10:cANSI
     " OMG CONSOLAS NOM NOM NOM
-    set gfn=Consolas
+    sil! set gfn=Consolas
 
     " find the ctags utility
     let Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
@@ -190,11 +190,18 @@ endfunction
 " Disable the audible and visual bells
 au VimEnter * set vb t_vb=
 
-set backspace=2
-syntax enable
-
-" set custom syntaxes here
+" set custom syntaxes here, before syntax enable
 au BufNewFile,BufRead *.applescript set syn+=applescript
+au BufWinEnter,BufNewFile,BufRead *.err set ft=err
+au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
+au! Syntax err
+au Syntax err runtime! syntax/err.vim
+au! Syntax wrn
+au Syntax wrn runtime! syntax/wrn.vim
+
+set backspace=2
+
+syntax enable
 
 set number
 set autoindent
