@@ -144,7 +144,10 @@ if has("gui_running")
 
     " If we're running on the Microsoft campus, then we want to do a few extra
     " things...
-    if(substitute($USERDNSDOMAIN, "\w\+\.", "", "") == "CORP.MICROSOFT.COM")
+    if(substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
+      " Microsoft does not obey the 80 character limit, so the window should
+      " really be bigger. Double ought to do it. --zack
+      call NotepadWindowSize(2)
     endif
   endif
 endif
@@ -280,14 +283,14 @@ let Tlist_Exit_OnlyWindow=1
 hi! link TagListFileName VisualNOS
 
 set ut=10
+
 " ts and sw need to be the same for << and >> to work correctly!
 set ts=2
 set sw=2
-set ls=2
-set tw=80
 
 " always show the status line
-" set laststatus=2
+set ls=2
+set tw=80
 
 " only use spaces instead of tabs
 set expandtab
