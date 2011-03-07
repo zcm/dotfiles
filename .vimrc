@@ -224,8 +224,8 @@ au ClojureZCM BufNewFile,BufRead *.clj set lisp
 aug END
 
 " folding options
-set foldcolumn=3
-set fdn=2
+"set foldcolumn=3
+"set fdn=2
 "aug zcm_folding
 "au zcm_folding BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
 "au zcm_folding BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
