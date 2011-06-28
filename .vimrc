@@ -3,6 +3,7 @@ set showcmd
 
 if has("persistent_undo")
   set undofile
+  set undolevels=10000
 endif
 
 if has("gui_macvim")
@@ -297,6 +298,8 @@ set sw=2
 
 " always show the status line
 set ls=2
+set stl=%<%f\ #%{changenr()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+
 set tw=80
 
 " only use spaces instead of tabs
