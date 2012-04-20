@@ -87,6 +87,8 @@ endfunction
 
 let Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
 
+let MICROSOFT_CORP_SPECIFIC=0
+
 " window settings for gvim
 " please only put GUI based settings in this section...
 " stuff that doesn't require the GUI to be running should go
@@ -146,9 +148,17 @@ if has("gui_running")
     " If we're running on the Microsoft campus, then we want to do a few extra
     " things...
     if(substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
+      let MICROSOFT_CORP_SPECIFIC=1
       " Microsoft does not obey the 80 character limit, so the window should
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
+      " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
+      " ohome at MS, so I need to put it somewhere else in order to make sure
+      " that my build doesn't break.
+      if !isdirectory($APPDATA . "\\vimundodata")
+        call mkdir($APPDATA . "\\vimundodata")
+      endif
+      set undodir="$APPDATA\vimundodata"
     endif
   endif
 endif
@@ -244,6 +254,12 @@ au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
 au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
 aug END
 
+" Exclude vimrc from undofile overrides
+aug zcm_vimrc_prevent_undofile_override
+au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc setlocal undodir=.
+au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc setlocal undodir=.
+aug END
+
 " netrw Explore sort options...
 let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
 
@@ -300,7 +316,11 @@ set sw=2
 set ls=2
 set stl=%<%f\ #%{changenr()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 
-set tw=80
+if MICROSOFT_CORP_SPECIFIC != 1
+  set tw=80
+endif
 
 " only use spaces instead of tabs
 set expandtab
+
+" vim:ai:et:ts=2:sw=2:tw=80
