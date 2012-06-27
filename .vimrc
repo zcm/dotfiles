@@ -1,6 +1,8 @@
 set nocompatible
 set showcmd
 
+set rtp+=~/vimfiles,~/vimfiles/after
+
 if has("persistent_undo")
   set undofile
   set undolevels=10000
@@ -85,9 +87,18 @@ function NotepadWindowSize(widthfactor)
   let &columns=88*a:widthfactor
 endfunction
 
-let Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
-
 let MICROSOFT_CORP_SPECIFIC=0
+let AMAZON_CORP_SPECIFIC=0
+
+if(substitute($HOSTNAME, "\\w\\+\\.", "", "") == "desktop.amazon.com")
+  let AMAZON_CORP_SPECIFIC=1
+  if(filereadable("/apollo/env/envImprovement/var/vimrc"))
+    so /apollo/env/envImprovement/var/vimrc
+    set rtp+=~/vimfiles,~/vimfiles/after
+  endif
+endif
+
+colo elflord " default for if we set nothing else ever
 
 " window settings for gvim
 " please only put GUI based settings in this section...
@@ -98,6 +109,7 @@ if has("gui_running")
 
   " use desert by default, and if we have it, use zackvim
   colo desert
+  sil! colo dante
   sil! colo zackvim
 
   set guioptions+=c
@@ -161,6 +173,10 @@ if has("gui_running")
       set undodir="$APPDATA\vimundodata"
     endif
   endif
+endif
+
+if(!(has("gui_win32") || has("dos32") || has("dos16")) && !MICROSOFT_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC)
+  let Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
 endif
 
 if has("dos32") || has("dos16")
