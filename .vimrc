@@ -272,8 +272,8 @@ aug END
 
 " Exclude vimrc from undofile overrides
 aug zcm_vimrc_prevent_undofile_override
-au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc setlocal undodir=.
-au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc setlocal undodir=.
+au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
+au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
 aug END
 
 " netrw Explore sort options...
