@@ -90,7 +90,7 @@ endfunction
 let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 
-if(substitute($HOSTNAME, "\\w\\+\\.", "", "") == "desktop.amazon.com")
+if(substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
   let AMAZON_CORP_SPECIFIC=1
   if(filereadable("/apollo/env/envImprovement/var/vimrc"))
     so /apollo/env/envImprovement/var/vimrc
@@ -338,5 +338,7 @@ endif
 
 " only use spaces instead of tabs
 set expandtab
+
+let g:ZM_vimrc_did_complete_load=1
 
 " vim:ai:et:ts=2:sw=2:tw=80
