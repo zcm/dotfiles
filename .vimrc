@@ -15,29 +15,33 @@ endif
 let g:dock_hidden = 0
 
 " on Mac OS X, gets the computer name (not the host name)
-function MacGetComputerName()
-  let computernamestring = system("scutil --get ComputerName")
-  return strpart(computernamestring, 0, strlen(computernamestring)-1)
-endfunction
+if (has("macunix") || has("gui_macvim"))
+  function MacGetComputerName()
+    let computernamestring = system("scutil --get ComputerName")
+    return strpart(computernamestring, 0, strlen(computernamestring)-1)
+  endfunction
 
-" on Mac OS X, toggle hiding the dock
-function MacToggleDockHiding()
-  if g:dock_hidden == 0
-    let g:dock_hidden = 1
-    " this is to make sure that the dock is unhidden on exit
-    aug zcm_dock_hiding
-    au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
-    aug END
-  else
-    let g:dock_hidden = 0
-    " this should make sure that the dock isn't touched
-    " if it's been manually unhidden
-    aug zcm_dock_hiding
-    au! zcm_dock_hiding
-    aug END
-  endif
-  call system("osascript -e 'tell app \"System Events\" to keystroke \"d\" using {command down, option down}'")
-endfunction
+  " on Mac OS X, toggle hiding the dock
+  function MacToggleDockHiding()
+    if has("autocmd")
+      if g:dock_hidden == 0
+        let g:dock_hidden = 1
+        " this is to make sure that the dock is unhidden on exit
+        aug zcm_dock_hiding
+        au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
+        aug END
+      else
+        let g:dock_hidden = 0
+        " this should make sure that the dock isn't touched
+        " if it's been manually unhidden
+        aug zcm_dock_hiding
+        au! zcm_dock_hiding
+        aug END
+      endif
+    endif
+    call system("osascript -e 'tell app \"System Events\" to keystroke \"d\" using {command down, option down}'")
+  endfunction
+endif
 
 " these two functions allow the user to toggle between
 " standard comments and Doxygen comments
@@ -89,6 +93,7 @@ endfunction
 
 let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
+let GOOGLE_CORP_SPECIFIC=0
 
 if(substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
   let AMAZON_CORP_SPECIFIC=1
@@ -96,6 +101,19 @@ if(substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com
     so /apollo/env/envImprovement/var/vimrc
     set rtp+=~/vimfiles,~/vimfiles/after
   endif
+elseif(substitute(substitute(system("echo $HOSTNAME"), "[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\.", "", ""), "[\s\n]\\+", "", "") == "corp.google.com")
+  let GOOGLE_CORP_SPECIFIC=1
+  if(filereadable("/usr/share/vim/google/gtags.vim"))
+    source /usr/share/vim/google/gtags.vim
+    let g:google_tags_list_orientation='vertical'
+    let g:google_tags_list_format='long'
+    nmap <C-]> :exe 'Gtlist ' . expand('<cword>')<CR>
+    nmap <C-W>] :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
+    nmap <C-W><C-]> :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
+    nmap <C-W>g<C-]> :vsp <CR>:exec("Gtjump ".expand("<cword>"))<CR>
+  endif
+elseif(substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
+  let MICROSOFT_CORP_SPECIFIC=1
 endif
 
 colo elflord " default for if we set nothing else ever
@@ -159,8 +177,7 @@ if has("gui_running")
 
     " If we're running on the Microsoft campus, then we want to do a few extra
     " things...
-    if(substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
-      let MICROSOFT_CORP_SPECIFIC=1
+    if MICROSOFT_CORP_SPECIFIC
       " Microsoft does not obey the 80 character limit, so the window should
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
@@ -175,7 +192,7 @@ if has("gui_running")
   endif
 endif
 
-if(!(has("gui_win32") || has("dos32") || has("dos16")) && !MICROSOFT_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC)
+if(!(has("gui_win32") || has("dos32") || has("dos16")) && !MICROSOFT_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
   let Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
 endif
 
@@ -214,17 +231,22 @@ function OriginalWindow()
   call OriginalWindowPosition()
 endfunction
 
-" Disable the audible and visual bells
-au VimEnter * set vb t_vb=
+if has("autocmd")
+  " Disable the audible and visual bells
+  au VimEnter * set vb t_vb=
 
-" set custom syntaxes here, before syntax enable
-au BufNewFile,BufRead *.applescript set syn+=applescript
-au BufWinEnter,BufNewFile,BufRead *.err set ft=err
-au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
-au! Syntax err
-au Syntax err runtime! syntax/err.vim
-au! Syntax wrn
-au Syntax wrn runtime! syntax/wrn.vim
+  " set custom syntaxes here, before syntax enable
+  au BufNewFile,BufRead *.applescript set syn+=applescript
+
+  if MICROSOFT_CORP_SPECIFIC
+    au BufWinEnter,BufNewFile,BufRead *.err set ft=err
+    au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
+    au! Syntax err
+    au Syntax err runtime! syntax/err.vim
+    au! Syntax wrn
+    au Syntax wrn runtime! syntax/wrn.vim
+  endif
+endif
 
 set backspace=2
 
@@ -232,49 +254,58 @@ syntax enable
 
 set number
 set autoindent
-au BufNewFile,BufRead *.java compiler javac
+
+if has("autocmd")
+  au BufNewFile,BufRead *.java compiler javac
+  if(filereadable($HOME . "/vimfiles/autoload/javacomplete.vim"))
+    au Filetype java setlocal omnifunc=javacomplete#Complete
+  endif
+endif
+
 filetype on
 filetype indent on
 filetype plugin on
 
-" lisp options
-aug ClojureZCM
-au ClojureZCM BufNewFile,BufRead *.clj set ft=lisp
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw <
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=catch,def,defn,defonce,doall
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=dorun,doseq,dosync,doto
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=monitor-enter,monitor-exit
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=ns,recur,throw,try,var
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=defn-,proxy
-au ClojureZCM BufNewFile,BufRead *.clj setlocal lw-=do
-au ClojureZCM BufNewFile,BufRead *.clj set lisp
-aug END
+if has("autocmd")
+  " lisp options
+  aug ClojureZCM
+  au ClojureZCM BufNewFile,BufRead *.clj set ft=lisp
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw <
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=catch,def,defn,defonce,doall
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=dorun,doseq,dosync,doto
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=monitor-enter,monitor-exit
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=ns,recur,throw,try,var
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=defn-,proxy
+  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw-=do
+  au ClojureZCM BufNewFile,BufRead *.clj set lisp
+  aug END
 
-" folding options
-"set foldcolumn=3
-"set fdn=2
-"aug zcm_folding
-"au zcm_folding BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
-"au zcm_folding BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
-"au zcm_folding BufNewFile,BufRead * silent! %foldo!
-"au zcm_folding BufNewFile,BufRead * let b:open_all_folds_bfbn=1
-"au zcm_folding WinEnter __Tag_List__ set foldcolumn=0
-"au zcm_folding Syntax java* syn region myfold start="{" end="}" transparent fold
-"au zcm_folding Syntax java* syn sync fromstart
-"aug END
+  " folding options
+  "set foldcolumn=3
+  "set fdn=2
+  "aug zcm_folding
+  "au zcm_folding BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
+  "au zcm_folding BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
+  "au zcm_folding BufNewFile,BufRead * silent! %foldo!
+  "au zcm_folding BufNewFile,BufRead * let b:open_all_folds_bfbn=1
+  "au zcm_folding WinEnter __Tag_List__ set foldcolumn=0
+  "au zcm_folding Syntax java* syn region myfold start="{" end="}" transparent fold
+  "au zcm_folding Syntax java* syn sync fromstart
+  "aug END
 
-" I just so happen to like Doxygen-style comments, so I'm going activate them by default here
-" (but, of course, only for compatible files with an autocommand)
-aug zcm_doxygen
-au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
-au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
-aug END
+  " I just so happen to like Doxygen-style comments, so I'm going activate them by default here
+  " (but, of course, only for compatible files with an autocommand)
+  aug zcm_doxygen
+  au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
+  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+  aug END
 
-" Exclude vimrc from undofile overrides
-aug zcm_vimrc_prevent_undofile_override
-au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
-au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
-aug END
+  " Exclude vimrc from undofile overrides
+  aug zcm_vimrc_prevent_undofile_override
+  au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
+  au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
+  aug END
+endif
 
 " netrw Explore sort options...
 let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
