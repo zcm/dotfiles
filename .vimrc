@@ -1,6 +1,14 @@
 set nocompatible
 set showcmd
 
+" detect if we're in restricted mode before doing anything else
+let RESTRICTED_MODE=0
+try
+  call system("echo ...")
+catch /^Vim\%((\a\+)\)\=:E145/
+  let RESTRICTED_MODE=1
+endtry
+
 set rtp+=~/vimfiles,~/vimfiles/after
 
 if has("persistent_undo")
@@ -15,7 +23,7 @@ endif
 let g:dock_hidden = 0
 
 " on Mac OS X, gets the computer name (not the host name)
-if (has("macunix") || has("gui_macvim"))
+if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
   function MacGetComputerName()
     let computernamestring = system("scutil --get ComputerName")
     return strpart(computernamestring, 0, strlen(computernamestring)-1)
@@ -95,13 +103,26 @@ let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
 
-if(substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
+function CheckRunningAtGoogle()
+  let l:domain_match=0
+  if has("unix")
+    let l:pattern="[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\."
+    if !g:RESTRICTED_MODE
+      let l:domain=substitute(substitute(system("echo $HOSTNAME"), l:pattern, "", ""), "[\s\n]\\+", "", "")
+      let l:domain_match=(l:domain == "corp.google.com")
+    endif
+    " TODO: add alternate detection case for both running at google and in restricted mode
+  endif
+  return l:domain_match
+endfunction
+
+if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
   let AMAZON_CORP_SPECIFIC=1
   if(filereadable("/apollo/env/envImprovement/var/vimrc"))
     so /apollo/env/envImprovement/var/vimrc
     set rtp+=~/vimfiles,~/vimfiles/after
   endif
-elseif(substitute(substitute(system("echo $HOSTNAME"), "[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\.", "", ""), "[\s\n]\\+", "", "") == "corp.google.com")
+elseif(CheckRunningAtGoogle())
   let GOOGLE_CORP_SPECIFIC=1
   if(filereadable("/usr/share/vim/google/gtags.vim"))
     source /usr/share/vim/google/gtags.vim
@@ -112,11 +133,13 @@ elseif(substitute(substitute(system("echo $HOSTNAME"), "[a-zA-Z0-9_\\-]\\+\\.[a-
     nmap <C-W><C-]> :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
     nmap <C-W>g<C-]> :vsp <CR>:exec("Gtjump ".expand("<cword>"))<CR>
   endif
-elseif(substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
+elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
   let MICROSOFT_CORP_SPECIFIC=1
 endif
 
-colo elflord " default for if we set nothing else ever
+if !RESTRICTED_MODE
+  colo elflord " default for if we set nothing else ever
+endif
 
 " window settings for gvim
 " please only put GUI based settings in this section...
@@ -134,22 +157,24 @@ if has("gui_running")
   set guioptions-=R " turn off the right scrollbar
   set guioptions-=L " turn off the left scrollbar
   if has("macunix")
-    let __computername = MacGetComputerName()
-    if __computername == "Euphoria"
-      winp 351 187
-    elseif __computername == "Bliss"
-      winp 461 262
-    elseif __computername == "Harmony"
-      "winp 1 0
-      " we need to use an autocommand to make this magic happen because
-      " Vim hates it when we go out of desktop bounds before it loads the
-      " freaking window
-      "aug zcm_windows_maximize
-      "au zcm_windows_maximize GUIEnter * set lines=59
-      "au zcm_windows_maximize GUIEnter * set columns=210
-      "au zcm_windows_maximize GUIEnter * call FullScreenMaximize_Harmony()
-      "aug END
-    elseif __computername == "Tim Menzies’s Mac mini"
+    if !RESTRICTED_MODE
+      let __computername = MacGetComputerName()
+      if __computername == "Euphoria"
+        winp 351 187
+      elseif __computername == "Bliss"
+        winp 461 262
+      elseif __computername == "Harmony"
+        "winp 1 0
+        " we need to use an autocommand to make this magic happen because
+        " Vim hates it when we go out of desktop bounds before it loads the
+        " freaking window
+        "aug zcm_windows_maximize
+        "au zcm_windows_maximize GUIEnter * set lines=59
+        "au zcm_windows_maximize GUIEnter * set columns=210
+        "au zcm_windows_maximize GUIEnter * call FullScreenMaximize_Harmony()
+        "aug END
+      elseif __computername == "Tim Menzies’s Mac mini"
+      endif
     endif
   elseif has("gui_win32")
     " screw it, on windows we just maximize
@@ -172,28 +197,40 @@ if has("gui_running")
     " OMG CONSOLAS NOM NOM NOM
     sil! set gfn=Consolas
 
-    " find the ctags utility
-    let Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
-
     " If we're running on the Microsoft campus, then we want to do a few extra
     " things...
     if MICROSOFT_CORP_SPECIFIC
       " Microsoft does not obey the 80 character limit, so the window should
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
-      " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
-      " ohome at MS, so I need to put it somewhere else in order to make sure
-      " that my build doesn't break.
-      if !isdirectory($APPDATA . "\\vimundodata")
-        call mkdir($APPDATA . "\\vimundodata")
-      endif
-      set undodir="$APPDATA\vimundodata"
     endif
   endif
 endif
 
-if(!(has("gui_win32") || has("dos32") || has("dos16")) && !MICROSOFT_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
-  let Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
+if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
+  " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
+  " ohome at MS, so I need to put it somewhere else in order to make sure
+  " that my build doesn't break.
+  if !isdirectory($APPDATA . "\\vimundodata")
+    call mkdir($APPDATA . "\\vimundodata")
+  endif
+  set undodir="$APPDATA\vimundodata"
+endif
+
+" Find the ctags command
+if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
+  if has("unix")
+    if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
+      let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
+    endif
+  elseif (has("win32") || has("win64") || has("win95"))
+    " find the ctags utility
+    if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
+      let g:Tlist_Ctags_Cmd = $HOME . "\\vimfiles\\bin\\ctags.exe"
+    elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
+      let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
+    endif
+  endif
 endif
 
 if has("dos32") || has("dos16")
@@ -203,33 +240,35 @@ endif
 " functions to make the window just like ma used to make
 
 " function to make the window in the original starting position
-function OriginalWindowPosition()
-  if MacGetComputerName() == "Euphoria"
-    winp 351 187
-  elseif MacGetComputerName() == "Bliss"
-    winp 461 262
-  elseif MacGetComputerName() == "Harmony"
-    winp 1 0
-  else
+if !RESTRICTED_MODE
+  function OriginalWindowPosition()
+    if MacGetComputerName() == "Euphoria"
+      winp 351 187
+    elseif MacGetComputerName() == "Bliss"
+      winp 461 262
+    elseif MacGetComputerName() == "Harmony"
+      winp 1 0
+    else
+      winp 5 25
+    endif
+  endfunction
+
+  " function to make the window the original size
+  function OriginalWindowSize()
+    if has("macunix") && g:dock_hidden == 0
+      call MacToggleDockHiding()
+    endif
     winp 5 25
-  endif
-endfunction
+    set lines=50
+    set columns=160
+  endfunction
 
-" function to make the window the original size
-function OriginalWindowSize()
-  if has("macunix") && g:dock_hidden == 0
-    call MacToggleDockHiding()
-  endif
-  winp 5 25
-  set lines=50
-  set columns=160
-endfunction
-
-" function to do both of the above
-function OriginalWindow()
-  call OriginalWindowSize()
-  call OriginalWindowPosition()
-endfunction
+  " function to do both of the above
+  function OriginalWindow()
+    call OriginalWindowSize()
+    call OriginalWindowPosition()
+  endfunction
+endif
 
 if has("autocmd")
   " Disable the audible and visual bells
@@ -250,7 +289,9 @@ endif
 
 set backspace=2
 
-syntax enable
+if !RESTRICTED_MODE
+  syntax enable
+endif
 
 set number
 set autoindent
@@ -343,8 +384,10 @@ inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F5> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
-nnoremap <C-F6> :call ToggleDoxygenComments()<CR>
-nnoremap <F6> :TlistToggle<CR>
+nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
+if exists(Tlist_Ctags_Cmd)
+  nnoremap <F7> :TlistToggle<CR>
+endif
 
 " taglist.vim options
 let Tlist_Compact_Format=1
