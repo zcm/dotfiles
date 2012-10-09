@@ -253,6 +253,11 @@ if !RESTRICTED_MODE
       let l:version_output = system(l:cmd . " --version")
       let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "Exuberant") >= 0)
       let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "exuberant") >= 0)
+      if !l:is_exuberant
+        let l:version_output = system('"'. l:cmd . '" --version')
+        let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "Exuberant") >= 0)
+        let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "exuberant") >= 0)
+      endif
     endif
     return l:is_exuberant
   endfunction
@@ -275,7 +280,7 @@ if !RESTRICTED_MODE
   endfunction
 endif
 
-if (filereadable($HOME . "/vimfiles/bundle/taglist/taglist.vim"))
+if (filereadable($HOME .  "/vimfiles/ipi/taglist/plugin/taglist.vim"))
   " Find the ctags command
   if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
     if has("unix")
@@ -285,7 +290,7 @@ if (filereadable($HOME . "/vimfiles/bundle/taglist/taglist.vim"))
     elseif (has("win32") || has("win64") || has("win95"))
       " find the ctags utility
       if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
-        let g:Tlist_Ctags_Cmd = $HOME . "\\vimfiles\\bin\\ctags.exe"
+        let g:Tlist_Ctags_Cmd = '"' . $HOME . '\\vimfiles\\bin\\ctags.exe"'
       elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
         let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
       endif
