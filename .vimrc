@@ -107,11 +107,13 @@ function CheckRunningAtGoogle()
   let l:domain_match=0
   if has("unix")
     let l:pattern="[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\."
-    if !g:RESTRICTED_MODE
+    let l:domain=substitute(substitute(hostname(), l:pattern, "", ""), "[\s\n]\\+", "", "")
+    let l:domain_match=(l:domain == "corp.google.com")
+    if !l:domain_match && !g:RESTRICTED_MODE
+      " for some reason, that didn't work... try through the shell if we can
       let l:domain=substitute(substitute(system("echo $HOSTNAME"), l:pattern, "", ""), "[\s\n]\\+", "", "")
       let l:domain_match=(l:domain == "corp.google.com")
     endif
-    " TODO: add alternate detection case for both running at google and in restricted mode
   endif
   return l:domain_match
 endfunction
@@ -124,9 +126,19 @@ if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "des
   endif
 elseif(CheckRunningAtGoogle())
   let GOOGLE_CORP_SPECIFIC=1
-  if(filereadable("/usr/share/vim/google/gtags.vim"))
+  if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
+    function Google_RecheckGtlistOrientationBounds()
+      if (&columns > 162 || &lines < 49)
+        let g:google_tags_list_orientation='vertical'
+      else
+        let g:google_tags_list_orientation='horizontal'
+      endif
+    endfunction
+    aug ZCM_GoogleGtagsResize
+    au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
+    aug END
     source /usr/share/vim/google/gtags.vim
-    let g:google_tags_list_orientation='vertical'
+    call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
     nmap <C-]> :exe 'Gtlist ' . expand('<cword>')<CR>
     nmap <C-W>] :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
@@ -217,18 +229,66 @@ if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
   set undodir="$APPDATA\vimundodata"
 endif
 
-" Find the ctags command
-if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
-  if has("unix")
-    if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
-      let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
+if !RESTRICTED_MODE
+  function CheckIsCtagsExuberant()
+    let l:is_exuberant = 0
+    " if cases copied from taglist.vim --zack
+    if exists('g:Tlist_Ctags_Cmd')
+      let l:cmd = g:Tlist_Ctags_Cmd
+    elseif executable('exuberant-ctags')
+      " On Debian Linux, exuberant ctags is installed
+      " as exuberant-ctags
+      let l:cmd = 'exuberant-ctags'
+    elseif executable('exctags')
+      " On Free-BSD, exuberant ctags is installed as exctags
+      let l:cmd = 'exctags'
+    elseif executable('ctags')
+      let l:cmd = 'ctags'
+    elseif executable('ctags.exe')
+      let l:cmd = 'ctags.exe'
+    elseif executable('tags')
+      let l:cmd = 'tags'
     endif
-  elseif (has("win32") || has("win64") || has("win95"))
-    " find the ctags utility
-    if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
-      let g:Tlist_Ctags_Cmd = $HOME . "\\vimfiles\\bin\\ctags.exe"
-    elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
-      let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
+    if exists("l:cmd")
+      let l:version_output = system(l:cmd . " --version")
+      let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "Exuberant") >= 0)
+      let l:is_exuberant = l:is_exuberant || (stridx(l:version_output, "exuberant") >= 0)
+    endif
+    return l:is_exuberant
+  endfunction
+  function RecheckTaglistOrientationBounds()
+    if (&columns > 162 || &lines < 49)
+      let g:Tlist_Use_Horiz_Window=0
+      if (&columns / 5 < 30)
+        let g:Tlist_WinWidth=30
+      else
+        let g:Tlist_WinWidth=(&columns / 5)
+      endif
+    else
+      let g:Tlist_Use_Horiz_Window=1
+      if &lines > 30
+        let g:Tlist_WinHeight=(&lines / 4 + 3)
+      else
+        let g:Tlist_WinHeight=(&lines / 3)
+      endif
+    endif
+  endfunction
+endif
+
+if (filereadable($HOME . "/vimfiles/bundle/taglist/taglist.vim"))
+  " Find the ctags command
+  if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
+    if has("unix")
+      if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
+        let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
+      endif
+    elseif (has("win32") || has("win64") || has("win95"))
+      " find the ctags utility
+      if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
+        let g:Tlist_Ctags_Cmd = $HOME . "\\vimfiles\\bin\\ctags.exe"
+      elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
+        let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
+      endif
     endif
   endif
 endif
@@ -288,6 +348,9 @@ if has("autocmd")
 endif
 
 set backspace=2
+
+call pathogen#infect()
+call ipi#inspect()
 
 if !RESTRICTED_MODE
   syntax enable
@@ -385,15 +448,23 @@ nnoremap <F5> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
 nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
-if exists(Tlist_Ctags_Cmd)
-  nnoremap <F7> :TlistToggle<CR>
-endif
 
-" taglist.vim options
-let Tlist_Compact_Format=1
-"let Tlist_Auto_Open=1
-let Tlist_Process_File_Always=1
-let Tlist_Exit_OnlyWindow=1
+if (!RESTRICTED_MODE && filereadable($HOME . "/vimfiles/ipi/taglist/plugin/taglist.vim") && CheckIsCtagsExuberant())
+  nnoremap <F7> :TlistToggle<CR>
+  " taglist.vim options
+  let Tlist_Compact_Format=1
+  "let Tlist_Auto_Open=1
+  let Tlist_Process_File_Always=1
+  let Tlist_Exit_OnlyWindow=1
+  aug ZCM_TaglistResize
+  au ZCM_TaglistResize VimResized * call RecheckTaglistOrientationBounds()
+  aug END
+  call RecheckTaglistOrientationBounds()
+  " we delay loading of the taglist plugin because it's slow and annoying if you
+  " don't have exuberant ctags or the wrong ctags installed (throws errors every
+  " time you open a file)
+  IP taglist
+endif
 hi! link TagListFileName VisualNOS
 
 set ut=10
