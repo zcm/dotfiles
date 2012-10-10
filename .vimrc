@@ -161,6 +161,11 @@ elseif(CheckRunningAtGoogle())
     aug ZCM_GoogleGtagsResize
     au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
     aug END
+    if exists("*GtagOmniCompletion")
+      aug ZCM_GoogleGtagsOmniCompletion
+      au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
+      aug END
+    endif
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
