@@ -99,6 +99,26 @@ function NotepadWindowSize(widthfactor)
   let &columns=88*a:widthfactor
 endfunction
 
+function RecalculatePluginSplitWidth()
+  let l:width=0
+  if (&columns / 5 < 30)
+    let l:width=30
+  else
+    let l:width=(&columns / 5)
+  endif
+  return l:width
+endfunction
+
+function RecalculatePluginSplitHeight()
+  let l:height=0
+  if &lines > 30
+    let l:height=(&lines / 4 + 3)
+  else
+    let l:height=(&lines / 3)
+  endif
+  return l:height
+endfunction
+
 let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
@@ -130,8 +150,12 @@ elseif(CheckRunningAtGoogle())
     function Google_RecheckGtlistOrientationBounds()
       if (&columns > 162 || &lines < 49)
         let g:google_tags_list_orientation='vertical'
+        let g:google_tags_list_height=''
+        let g:google_tags_list_width=RecalculatePluginSplitWidth()
       else
         let g:google_tags_list_orientation='horizontal'
+        let g:google_tags_list_width=''
+        let g:google_tags_list_height=RecalculatePluginSplitHeight()
       endif
     endfunction
     aug ZCM_GoogleGtagsResize
@@ -264,18 +288,10 @@ if !RESTRICTED_MODE
   function RecheckTaglistOrientationBounds()
     if (&columns > 162 || &lines < 49)
       let g:Tlist_Use_Horiz_Window=0
-      if (&columns / 5 < 30)
-        let g:Tlist_WinWidth=30
-      else
-        let g:Tlist_WinWidth=(&columns / 5)
-      endif
+      let g:Tlist_WinWidth=RecalculatePluginSplitWidth()
     else
       let g:Tlist_Use_Horiz_Window=1
-      if &lines > 30
-        let g:Tlist_WinHeight=(&lines / 4 + 3)
-      else
-        let g:Tlist_WinHeight=(&lines / 3)
-      endif
+      let g:Tlist_WinHeight=RecalculatePluginSplitHeight()
     endif
   endfunction
 endif
