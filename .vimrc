@@ -525,6 +525,8 @@ let g:ZM_vimrc_did_complete_load=1
 
 " and here, if we're running at Google, we will take their changes
 " (override Google stuff by putting commands after this call)
-source  /usr/share/vim/google/google.vim
+if GOOGLE_CORP_SPECIFIC
+  source  /usr/share/vim/google/google.vim
+endif
 
 " vim:ai:et:ts=2:sw=2:tw=80
