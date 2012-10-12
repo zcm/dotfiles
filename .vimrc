@@ -158,6 +158,14 @@ elseif(CheckRunningAtGoogle())
         let g:google_tags_list_height=RecalculatePluginSplitHeight()
       endif
     endfunction
+    function Google_FindAndSetGoogle3Root()
+      let l:absolute=expand("%:p:h")
+      let l:idx=stridx(absolute, "google3")
+      if l:idx >= 0
+        setlocal path<
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
+      endif
+    endfunction
     aug ZCM_GoogleGtagsResize
     au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
     aug END
@@ -166,6 +174,9 @@ elseif(CheckRunningAtGoogle())
       au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
       aug END
     endif
+    aug ZCM_SetGoogle3PathRoot
+    au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root()
+    aug END
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
