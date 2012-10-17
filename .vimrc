@@ -166,6 +166,20 @@ elseif(CheckRunningAtGoogle())
         execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
       endif
     endfunction
+    function Google_GtlistIfNotHelp()
+      if &syn == "help"
+        exe 'tag ' . expand('<cword>')
+      else
+        exe 'Gtlist ' . expand('<cword>')
+      endif
+    endfunction
+    function Google_GtjumpIfNotHelp()
+      if &syn == "help"
+        exe 'tjump ' . expand('<cword>')
+      else
+        exe 'Gtjump ' . expand('<cword>')
+      endif
+    endfunction
     aug ZCM_GoogleGtagsResize
     au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
     aug END
@@ -180,10 +194,10 @@ elseif(CheckRunningAtGoogle())
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
-    nmap <C-]> :exe 'Gtlist ' . expand('<cword>')<CR>
-    nmap <C-W>] :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
-    nmap <C-W><C-]> :tab split<CR>:exec("Gtjump ".expand("<cword>"))<CR>
-    nmap <C-W>g<C-]> :vsp <CR>:exec("Gtjump ".expand("<cword>"))<CR>
+    nnoremap <C-]> :call Google_GtlistIfNotHelp()<CR>
+    nnoremap <C-W>] :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
+    nnoremap <C-W><C-]> :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
+    nnoremap <C-W>g<C-]> :vsp <CR>:call Google_GtjumpIfNotHelp()<CR>
   endif
 elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
   let MICROSOFT_CORP_SPECIFIC=1
