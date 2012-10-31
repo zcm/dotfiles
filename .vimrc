@@ -158,12 +158,16 @@ elseif(CheckRunningAtGoogle())
         let g:google_tags_list_height=RecalculatePluginSplitHeight()
       endif
     endfunction
-    function Google_FindAndSetGoogle3Root()
+    function Google_FindAndSetGoogle3Root(add_java_paths)
       let l:absolute=expand("%:p:h")
       let l:idx=stridx(absolute, "google3")
       if l:idx >= 0
         setlocal path<
         execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
+        if a:add_java_paths
+          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
+          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
+        endif
       endif
     endfunction
     function Google_GtlistIfNotHelp()
@@ -189,7 +193,8 @@ elseif(CheckRunningAtGoogle())
       aug END
     endif
     aug ZCM_SetGoogle3PathRoot
-    au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root()
+    au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root(0)
+    au ZCM_SetGoogle3PathRoot BufEnter *.java call Google_FindAndSetGoogle3Root(1)
     aug END
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
