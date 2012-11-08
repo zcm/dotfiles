@@ -158,19 +158,6 @@ elseif(CheckRunningAtGoogle())
         let g:google_tags_list_height=RecalculatePluginSplitHeight()
       endif
     endfunction
-    function Google_FindAndSetGoogle3Root(add_java_paths)
-      let l:absolute=expand("%:p:h")
-      let l:idx=stridx(absolute, "google3")
-      if l:idx >= 0
-        setlocal path<
-        execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
-        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3"
-        if a:add_java_paths
-          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
-          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
-        endif
-      endif
-    endfunction
     function Google_GtlistIfNotHelp()
       if &syn == "help"
         exe 'tag ' . expand('<cword>')
@@ -193,10 +180,6 @@ elseif(CheckRunningAtGoogle())
       au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
       aug END
     endif
-    aug ZCM_SetGoogle3PathRoot
-    au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root(0)
-    au ZCM_SetGoogle3PathRoot BufEnter *.java call Google_FindAndSetGoogle3Root(1)
-    aug END
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
@@ -205,6 +188,23 @@ elseif(CheckRunningAtGoogle())
     nnoremap <C-W><C-]> :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
     nnoremap <C-W>g<C-]> :vsp <CR>:call Google_GtjumpIfNotHelp()<CR>
   endif
+  function Google_FindAndSetGoogle3Root(add_java_paths)
+    let l:absolute=expand("%:p:h")
+    let l:idx=stridx(absolute, "google3")
+    if l:idx >= 0
+      setlocal path<
+      execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
+      execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3"
+      if a:add_java_paths
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
+      endif
+    endif
+  endfunction
+  aug ZCM_SetGoogle3PathRoot
+  au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root(0)
+  au ZCM_SetGoogle3PathRoot BufEnter *.java call Google_FindAndSetGoogle3Root(1)
+  aug END
 elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
   let MICROSOFT_CORP_SPECIFIC=1
 endif
