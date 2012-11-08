@@ -164,6 +164,7 @@ elseif(CheckRunningAtGoogle())
       if l:idx >= 0
         setlocal path<
         execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3"
         if a:add_java_paths
           execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
           execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
