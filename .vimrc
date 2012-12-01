@@ -524,6 +524,9 @@ if (!RESTRICTED_MODE && filereadable($HOME . "/vimfiles/ipi/taglist/plugin/tagli
 endif
 hi! link TagListFileName VisualNOS
 
+hi Pmenu ctermfg=7 ctermbg=5
+hi PmenuSel ctermfg=5 ctermbg=6
+
 set ut=10
 
 " ts and sw need to be the same for << and >> to work correctly!
