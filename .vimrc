@@ -550,6 +550,8 @@ let g:ZM_vimrc_did_complete_load=1
 " (override Google stuff by putting commands after this call)
 if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
   source /usr/share/vim/google/google.vim
+  " make sure this is just about the last line in the file, especially for corp-specific modes
+  set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
 endif
 
 " vim:ai:et:ts=2:sw=2:tw=80
