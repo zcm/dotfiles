@@ -60,7 +60,7 @@ endfunction
 function DisableDoxygenComments()
   let b:zcm_doxified = 0
   set syn-=.doxygen
-endfunctio
+endfunction
 
 function ToggleDoxygenComments()
   if b:zcm_doxified == 0
@@ -423,20 +423,34 @@ function IsBundleInstalledWithAutoload(bundle_name, autoload_target)
   return filereadable($HOME . "/vimfiles/ipi/" . a:bundle_name . "/autoload/" . a:autoload_target . ".vim")
 endfunction
 
+function ZackBundleGetGitUserOrUrl(items)
+  let github_user_or_git_url = ''
+  let current = 0
+  for item in a:items
+    if current == len(a:items) - 1
+      break
+    elseif current != 0
+      let github_user_or_git_url = github_user_or_git_url . '/'
+    endif
+    let github_user_or_git_url = github_user_or_git_url . item
+    let current = current + 1
+  endfor
+  return github_user_or_git_url
+endfunction
+
 function ZackBundle(...) abort
   if len(a:000) == 1
     let items = split(a:1, '/')
-    let github_user_or_git_url = ''
-    let current = 0
-    for item in items:
-      if current = len(items) - 1
-        break
-      endif
-      let github_user_or_git_url = github_user_or_git_url . item . '/'
-    endfor
+    let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
     call ZackBundle(github_user_or_git_url, items[len(items)-1])
   elseif len(a:000) == 2
-    call ZackBundle(a:1, a:2, a:2 . '.vim')
+    if stridx(a:1, '/') != -1 && stridx(a:2, ".vim") != -1
+      let items = split(a:1, '/')
+      let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
+      call ZackBundle(github_user_or_git_url, items[len(items)-1], a:2)
+    else
+      call ZackBundle(a:1, a:2, a:2 . '.vim')
+    endif
   elseif len(a:000) == 3
     " Do real work now
     let bundle_target = a:1 . '/' . a:2
@@ -459,20 +473,30 @@ endfunction
 Bundle 'gmarik/vundle'
 
 " other bundles...
+" YCM should probably come last... YOUCOMPLETEME IS HARD OKAY
 if (version >= 703 && has('patch584')) || version > 703
   if GOOGLE_CORP_SPECIFIC
-    let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
-    let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
-    if filereadable(ycm_core) && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python")
-      call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
-    endif
-    if filereadable(libclang) && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python")
-      call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+    function UpdateGoogleYcmBinaries()
+      let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
+      let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
+      if filereadable(ycm_core) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+        call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+      endif
+      if filereadable(libclang) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+        call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+      endif
+    endfunction
+    let local_ycm = $HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.so"
+    let local_clang = $HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.so"
+    if !filereadable(local_ycm) || !filereadable(local_clang)
+      call UpdateGoogleYcmBinaries()
     endif
     " might consider doing this magic outside of google too...
   endif
-  call ZackBundle('Valloric', 'YouCompleteMe', 'youcompleteme.vim')
+  call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
 endif
+
+" End bundle section
 
 if !RESTRICTED_MODE
   syntax enable
