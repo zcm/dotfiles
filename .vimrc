@@ -476,20 +476,23 @@ Bundle 'gmarik/vundle'
 " YCM should probably come last... YOUCOMPLETEME IS HARD OKAY
 if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584 or better for YCM...
   if GOOGLE_CORP_SPECIFIC
-    function UpdateGoogleYcmBinaries()
-      let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
-      let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
-      if filereadable(ycm_core) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
-        call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+    " Can't make system calls in restricted mode, so we won't update in this case.
+    if !RESTRICTED_MODE
+      function UpdateGoogleYcmBinaries()
+        let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
+        let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
+        if filereadable(ycm_core) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+          call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+        endif
+        if filereadable(libclang) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+          call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+        endif
+      endfunction
+      let local_ycm = $HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.so"
+      let local_clang = $HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.so"
+      if !filereadable(local_ycm) || !filereadable(local_clang)
+        call UpdateGoogleYcmBinaries()
       endif
-      if filereadable(libclang) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
-        call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
-      endif
-    endfunction
-    let local_ycm = $HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.so"
-    let local_clang = $HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.so"
-    if !filereadable(local_ycm) || !filereadable(local_clang)
-      call UpdateGoogleYcmBinaries()
     endif
     " might consider doing this magic outside of google too...
   endif
