@@ -332,20 +332,18 @@ if !RESTRICTED_MODE
   endfunction
 endif
 
-if (filereadable($HOME .  "/vimfiles/ipi/taglist/plugin/taglist.vim"))
-  " Find the ctags command
-  if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
-    if has("unix")
-      if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
-        let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
-      endif
-    elseif (has("win32") || has("win64") || has("win95"))
-      " find the ctags utility
-      if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
-        let g:Tlist_Ctags_Cmd = '"' . $HOME . '\\vimfiles\\bin\\ctags.exe"'
-      elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
-        let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
-      endif
+" Find the ctags command
+if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
+  if has("unix")
+    if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
+      let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
+    endif
+  elseif (has("win32") || has("win64") || has("win95"))
+    " find the ctags utility
+    if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
+      let g:Tlist_Ctags_Cmd = '"' . $HOME . '\\vimfiles\\bin\\ctags.exe"'
+    elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
+      let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
     endif
   endif
 endif
@@ -402,6 +400,16 @@ if has("autocmd")
     au! Syntax wrn
     au Syntax wrn runtime! syntax/wrn.vim
   endif
+
+  " Fix terminal timeout when pressing escape to leave insert mode
+  if !has("gui_running")
+    set ttimeoutlen=10
+    aug FastEscape
+    autocmd!
+    au InsertEnter * set timeoutlen=0
+    au InsertLeave * set timeoutlen=1000
+    aug END
+  endif
 endif
 
 set backspace=2
@@ -420,7 +428,11 @@ function IsBundleInstalled(bundle_name)
 endfunction
 
 function IsBundleInstalledWithAutoload(bundle_name, autoload_target)
-  return filereadable($HOME . "/vimfiles/ipi/" . a:bundle_name . "/autoload/" . a:autoload_target . ".vim")
+  return IsBundleInstalledWithSomeFile(bundle_name, "autoload/" . autoload_target)
+endfunction
+
+function IsBundleInstalledWithSomeFile(bundle_name, target)
+  return filereadable($HOME . "/vimfiles/ipi/" . a:bundle_name . "/".  a:target)
 endfunction
 
 function ZackBundleGetGitUserOrUrl(items)
@@ -440,28 +452,46 @@ endfunction
 
 function ZackBundle(...) abort
   if len(a:000) == 1
-    let items = split(a:1, '/')
-    let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
-    call ZackBundle(github_user_or_git_url, items[len(items)-1])
+    if stridx(a:1, '/') == -1
+      call ZackBundle(a:1, '')
+    else
+      let items = split(a:1, '/')
+      let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
+      call ZackBundle(github_user_or_git_url, items[len(items)-1], 0)
+    endif
   elseif len(a:000) == 2
     if stridx(a:1, '/') != -1 && stridx(a:2, ".vim") != -1
       let items = split(a:1, '/')
       let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
       call ZackBundle(github_user_or_git_url, items[len(items)-1], a:2)
+    elseif stridx(a:1, '/') == -1 && stridx(a:2, ".vim") != -1
+      call ZackBundle(a:1, '', a:2)
     else
-      call ZackBundle(a:1, a:2, a:2 . '.vim')
+      call ZackBundle(a:1, a:2, 0)
     endif
   elseif len(a:000) == 3
     " Do real work now
-    let bundle_target = a:1 . '/' . a:2
-    let bundle_name = a:2
+    let bundle_target = a:1 . (a:2 != '' ? '/' . a:2 : '')
+    let bundle_name = a:2 == '' ? a:1 : a:2
     let bundle_name_parts = split(a:2, '.')
     if len(bundle_name_parts) > 0
       let bundle_name = bundle_name_parts[0]
     endif
     execute "Bundle '" . bundle_target . "'"
-    if IsBundleInstalledWithAutoload(bundle_name, a:3)
-      execute 'IP ' . bundle_name
+    if a:3
+      if stridx(a:3, '/') != -1
+        if IsBundleInstalledWithAutoload(bundle_name, a:3)
+          execute 'IP ' . bundle_name
+        endif
+      else
+        if IsBundleInstalledWithSomeFile(bundle_name, a:3)
+          execute 'IP ' . bundle_name
+        endif
+      endif
+    else
+      if isdirectory($HOME . "/vimfiles/ipi/" . bundle_name)
+        execute 'IP ' . bundle_name
+      endif
     endif
   endif
   " I guess we can just ignore if we give it 0 or >3 args
@@ -473,7 +503,7 @@ endfunction
 Bundle 'gmarik/vundle'
 
 " other bundles...
-" YCM should probably come last... YOUCOMPLETEME IS HARD OKAY
+" YCM should probably come last... YOUCOMPLETEME IS HARD OKAY (okay, so maybe first...)
 if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584 or better for YCM...
   if GOOGLE_CORP_SPECIFIC
     " Can't make system calls in restricted mode, so we won't update in this case.
@@ -499,7 +529,34 @@ if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584
   call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
 endif
 
+call ZackBundle('gmarik/ingretu')
+
+if (version >= 703 && has('patch661')) || version > 703
+  " These look awful on the terminal with unpatched fonts. Maybe I'll get to
+  " supporting this in the future. Or something. --zack
+  "call ZackBundle('Lokaltog/powerline')
+  "set rtp+=$HOME/vimfiles/ipi/powerline/powerline/bindings/vim
+endif
+
+if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
+  nnoremap <F7> :TlistToggle<CR>
+  " taglist.vim options
+  let Tlist_Compact_Format=1
+  "let Tlist_Auto_Open=1
+  let Tlist_Process_File_Always=1
+  let Tlist_Exit_OnlyWindow=1
+  aug ZCM_TaglistResize
+  au ZCM_TaglistResize VimResized * call RecheckTaglistOrientationBounds()
+  aug END
+  call RecheckTaglistOrientationBounds()
+  " we delay loading of the taglist plugin because it's slow and annoying if you
+  " don't have exuberant ctags or the wrong ctags installed (throws errors every
+  " time you open a file)
+  call ZackBundle('taglist.vim')
+endif
+
 " End bundle section
+
 
 if !RESTRICTED_MODE
   syntax enable
@@ -600,22 +657,6 @@ inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
 nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
 
-if (!RESTRICTED_MODE && filereadable($HOME . "/vimfiles/ipi/taglist/plugin/taglist.vim") && CheckIsCtagsExuberant())
-  nnoremap <F7> :TlistToggle<CR>
-  " taglist.vim options
-  let Tlist_Compact_Format=1
-  "let Tlist_Auto_Open=1
-  let Tlist_Process_File_Always=1
-  let Tlist_Exit_OnlyWindow=1
-  aug ZCM_TaglistResize
-  au ZCM_TaglistResize VimResized * call RecheckTaglistOrientationBounds()
-  aug END
-  call RecheckTaglistOrientationBounds()
-  " we delay loading of the taglist plugin because it's slow and annoying if you
-  " don't have exuberant ctags or the wrong ctags installed (throws errors every
-  " time you open a file)
-  IP taglist
-endif
 hi! link TagListFileName VisualNOS
 
 hi Pmenu ctermfg=7 ctermbg=5
