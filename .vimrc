@@ -9,7 +9,7 @@ catch /^Vim\%((\a\+)\)\=:E145/
   let RESTRICTED_MODE=1
 endtry
 
-set rtp+=~/vimfiles,~/vimfiles/after,~/vimfiles/bundle/vundle
+set rtp+=~/vimfiles,~/vimfiles/after
 
 if has("persistent_undo")
   set undofile
@@ -409,13 +409,70 @@ set backspace=2
 call pathogen#infect()
 call ipi#inspect()
 
+" Time to kickstart Vundle using IPI... god what a hack
+IP vundle
+
 filetype off " do NOT start vundle with this on!
-call vundle#rc("$HOME/vimfiles/bundle")
+call vundle#rc("$HOME/vimfiles/ipi")
+
+function IsBundleInstalled(bundle_name)
+  return IsBundleInstalledWithAutoload(a:bundle_name, a:bundle_name)
+endfunction
+
+function IsBundleInstalledWithAutoload(bundle_name, autoload_target)
+  return filereadable($HOME . "/vimfiles/ipi/" . a:bundle_name . "/autoload/" . a:autoload_target . ".vim")
+endfunction
+
+function ZackBundle(...) abort
+  if len(a:000) == 1
+    let items = split(a:1, '/')
+    let github_user_or_git_url = ''
+    let current = 0
+    for item in items:
+      if current = len(items) - 1
+        break
+      endif
+      let github_user_or_git_url = github_user_or_git_url . item . '/'
+    endfor
+    call ZackBundle(github_user_or_git_url, items[len(items)-1])
+  elseif len(a:000) == 2
+    call ZackBundle(a:1, a:2, a:2 . '.vim')
+  elseif len(a:000) == 3
+    " Do real work now
+    let bundle_target = a:1 . '/' . a:2
+    let bundle_name = a:2
+    let bundle_name_parts = split(a:2, '.')
+    if len(bundle_name_parts) > 0
+      let bundle_name = bundle_name_parts[0]
+    endif
+    execute "Bundle '" . bundle_target . "'"
+    if IsBundleInstalledWithAutoload(bundle_name, a:3)
+      execute 'IP ' . bundle_name
+    endif
+  endif
+  " I guess we can just ignore if we give it 0 or >3 args
+endfunction
 
 " Vundle bundles go here
 
 " absolutely completely required
 Bundle 'gmarik/vundle'
+
+" other bundles...
+if (version >= 703 && has('patch584')) || version > 703
+  if GOOGLE_CORP_SPECIFIC
+    let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
+    let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
+    if filereadable(ycm_core) && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+      call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+    endif
+    if filereadable(libclang) && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+      call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
+    endif
+    " might consider doing this magic outside of google too...
+  endif
+  call ZackBundle('Valloric', 'YouCompleteMe', 'youcompleteme.vim')
+endif
 
 if !RESTRICTED_MODE
   syntax enable
