@@ -9,7 +9,7 @@ catch /^Vim\%((\a\+)\)\=:E145/
   let RESTRICTED_MODE=1
 endtry
 
-set rtp+=~/vimfiles,~/vimfiles/after
+set rtp+=~/vimfiles,~/vimfiles/after,~/vimfiles/bundle/vundle
 
 if has("persistent_undo")
   set undofile
@@ -142,7 +142,7 @@ if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "des
   let AMAZON_CORP_SPECIFIC=1
   if(filereadable("/apollo/env/envImprovement/var/vimrc"))
     so /apollo/env/envImprovement/var/vimrc
-    set rtp+=~/vimfiles,~/vimfiles/after
+    set rtp+=~/vimfiles,~/vimfiles/after,~/vimfiles/bundle/vundle
   endif
 elseif(CheckRunningAtGoogle())
   let GOOGLE_CORP_SPECIFIC=1
@@ -409,6 +409,14 @@ set backspace=2
 call pathogen#infect()
 call ipi#inspect()
 
+filetype off " do NOT start vundle with this on!
+call vundle#rc("$HOME/vimfiles/bundle")
+
+" Vundle bundles go here
+
+" absolutely completely required
+Bundle 'gmarik/vundle'
+
 if !RESTRICTED_MODE
   syntax enable
 endif
@@ -417,7 +425,9 @@ set number
 set autoindent
 
 if has("autocmd")
-  au BufNewFile,BufRead *.java compiler javac
+  if !GOOGLE_CORP_SPECIFIC
+    au BufNewFile,BufRead *.java compiler javac
+  endif
   if(filereadable($HOME . "/vimfiles/autoload/javacomplete.vim"))
     au Filetype java setlocal omnifunc=javacomplete#Complete
   endif
