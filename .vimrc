@@ -385,35 +385,91 @@ if !RESTRICTED_MODE
   endfunction
 endif
 
-if has("autocmd")
-  " Disable the audible and visual bells
-  au VimEnter * set vb t_vb=
+" This section should be used for custom mappings and personal editor settings,
+" before we start taking changes from our environment (e.g. Google).
 
-  " set custom syntaxes here, before syntax enable
-  au BufNewFile,BufRead *.applescript set syn+=applescript
-
-  if MICROSOFT_CORP_SPECIFIC
-    au BufWinEnter,BufNewFile,BufRead *.err set ft=err
-    au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
-    au! Syntax err
-    au Syntax err runtime! syntax/err.vim
-    au! Syntax wrn
-    au Syntax wrn runtime! syntax/wrn.vim
-  endif
-
-  " Fix terminal timeout when pressing escape to leave insert mode
-  if !has("gui_running")
-    set ttimeoutlen=10
-    aug FastEscape
-    autocmd!
-    au InsertEnter * set timeoutlen=0
-    au InsertLeave * set timeoutlen=1000
-    aug END
-  endif
-endif
+" netrw Explore sort options...
+let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
 
 set backspace=2
 
+set number
+set autoindent
+
+filetype on
+filetype indent on
+filetype plugin on
+
+let s:cpo_save=&cpo
+set cpo&vim
+map! <xHome> <Home>
+map! <xEnd> <End>
+map! <S-xF4> <S-F4>
+map! <S-xF3> <S-F3>
+map! <S-xF2> <S-F2>
+map! <S-xF1> <S-F1>
+map! <xF4> <F4>
+map! <xF3> <F3>
+map! <xF2> <F2>
+map! <xF1> <F1>
+map <xHome> <Home>
+map <xEnd> <End>
+map <S-xF4> <S-F4>
+map <S-xF3> <S-F3>
+map <S-xF2> <S-F2>
+map <S-xF1> <S-F1>
+map <xF4> <F4>
+map <xF3> <F3>
+map <xF2> <F2>
+map <xF1> <F1>
+let &cpo=s:cpo_save
+unlet s:cpo_save
+
+set report=1
+
+" custom mappings
+nmap <C-C><C-N> :set invnumber<CR>
+inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
+nnoremap <F5> "=strftime("%x %X %Z")<CR>P
+inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
+nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
+nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
+
+hi! link TagListFileName VisualNOS
+
+hi Pmenu ctermfg=7 ctermbg=5
+hi PmenuSel ctermfg=5 ctermbg=6
+
+set ut=10
+
+" ts and sw need to be the same for << and >> to work correctly!
+set ts=2
+set sw=2
+
+" always show the status line
+set ls=2
+set stl=%<%f\ #%{changenr()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+
+if MICROSOFT_CORP_SPECIFIC != 1
+  set tw=80
+endif
+
+" only use spaces instead of tabs
+set expandtab
+
+if filereadable($VIMRUNTIME . "/macros/matchit.vim")
+  source $VIMRUNTIME/macros/matchit.vim
+endif
+
+" and here, if we're running at Google, we will take their changes
+" (override Google stuff by putting commands after this call)
+if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
+  source /usr/share/vim/google/google.vim
+  " make sure this is just about the last line in the file, especially for corp-specific modes
+  set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
+endif
+
+" Fire up Pathogen and IPI so we can chainload package managers.
 call pathogen#infect()
 call ipi#inspect()
 
@@ -497,13 +553,14 @@ function ZackBundle(...) abort
   " I guess we can just ignore if we give it 0 or >3 args
 endfunction
 
-" Vundle bundles go here
+" Vundle bundles go here (and other packages too, say, Glug/Pathogen)
 
 " absolutely completely required
 Bundle 'gmarik/vundle'
 
 " other bundles...
 " YCM should probably come last... YOUCOMPLETEME IS HARD OKAY (okay, so maybe first...)
+let PLAN_TO_USE_YCM_OMNIFUNC = 0
 if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584 or better for YCM...
   if GOOGLE_CORP_SPECIFIC
     " Can't make system calls in restricted mode, so we won't update in this case.
@@ -526,6 +583,7 @@ if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584
     endif
     " might consider doing this magic outside of google too...
   endif
+  let PLAN_TO_USE_YCM_OMNIFUNC = 1
   call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
 endif
 
@@ -555,30 +613,46 @@ if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
   call ZackBundle('taglist.vim')
 endif
 
+call ZackBundle('tpope/vim-scriptease')
+call ZackBundle('Valloric/MatchTagAlways')
+
+" Glug packages...
+if GOOGLE_CORP_SPECIFIC
+  Glug blaze
+  Glug g4
+endif
+
 " End bundle section
 
 
-if !RESTRICTED_MODE
-  syntax enable
-endif
-
-set number
-set autoindent
-
+" Autocommand section -- goes after bundle section since autocommands may
+" depend on bundle settings
 if has("autocmd")
-  if !GOOGLE_CORP_SPECIFIC
-    au BufNewFile,BufRead *.java compiler javac
-  endif
-  if(filereadable($HOME . "/vimfiles/autoload/javacomplete.vim"))
-    au Filetype java setlocal omnifunc=javacomplete#Complete
-  endif
-endif
+  " Disable the audible and visual bells
+  au VimEnter * set vb t_vb=
 
-filetype on
-filetype indent on
-filetype plugin on
+  " set custom syntaxes here, before syntax enable
+  au BufNewFile,BufRead *.applescript set syn+=applescript
 
-if has("autocmd")
+  if MICROSOFT_CORP_SPECIFIC
+    au BufWinEnter,BufNewFile,BufRead *.err set ft=err
+    au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
+    au! Syntax err
+    au Syntax err runtime! syntax/err.vim
+    au! Syntax wrn
+    au Syntax wrn runtime! syntax/wrn.vim
+  endif
+
+  " Fix terminal timeout when pressing escape to leave insert mode
+  if !has("gui_running")
+    set ttimeoutlen=10
+    aug FastEscape
+    autocmd!
+    au InsertEnter * set timeoutlen=0
+    au InsertLeave * set timeoutlen=1000
+    aug END
+  endif
+
   " lisp options
   aug ClojureZCM
   au ClojureZCM BufNewFile,BufRead *.clj set ft=lisp
@@ -612,81 +686,27 @@ if has("autocmd")
   au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
   aug END
 
-  " Exclude vimrc from undofile overrides
+  " Exclude vimrc from undofile overrides since our copy is under source control
   aug zcm_vimrc_prevent_undofile_override
   au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
   au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
   aug END
+
+  if !GOOGLE_CORP_SPECIFIC
+    au BufNewFile,BufRead *.java compiler javac
+  endif
+  if PLAN_TO_USE_YCM_OMNIFUNC && filereadable($HOME . "/vimfiles/autoload/javacomplete.vim")
+    au Filetype java setlocal omnifunc=javacomplete#Complete
+  endif
 endif
 
-" netrw Explore sort options...
-let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
+" End autocommand section
 
-let s:cpo_save=&cpo
-set cpo&vim
-map! <xHome> <Home>
-map! <xEnd> <End>
-map! <S-xF4> <S-F4>
-map! <S-xF3> <S-F3>
-map! <S-xF2> <S-F2>
-map! <S-xF1> <S-F1>
-map! <xF4> <F4>
-map! <xF3> <F3>
-map! <xF2> <F2>
-map! <xF1> <F1>
-map <xHome> <Home>
-map <xEnd> <End>
-map <S-xF4> <S-F4>
-map <S-xF3> <S-F3>
-map <S-xF2> <S-F2>
-map <S-xF1> <S-F1>
-map <xF4> <F4>
-map <xF3> <F3>
-map <xF2> <F2>
-map <xF1> <F1>
-let &cpo=s:cpo_save
-unlet s:cpo_save
 
-set report=1
-
-" custom mappings
-nmap <C-C><C-N> :set invnumber<CR>
-inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
-nnoremap <F5> "=strftime("%x %X %Z")<CR>P
-inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
-nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
-nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
-
-hi! link TagListFileName VisualNOS
-
-hi Pmenu ctermfg=7 ctermbg=5
-hi PmenuSel ctermfg=5 ctermbg=6
-
-set ut=10
-
-" ts and sw need to be the same for << and >> to work correctly!
-set ts=2
-set sw=2
-
-" always show the status line
-set ls=2
-set stl=%<%f\ #%{changenr()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
-
-if MICROSOFT_CORP_SPECIFIC != 1
-  set tw=80
+if !RESTRICTED_MODE
+  syntax enable
 endif
-
-" only use spaces instead of tabs
-set expandtab
 
 let g:ZM_vimrc_did_complete_load=1
-
-" and here, if we're running at Google, we will take their changes
-" (override Google stuff by putting commands after this call)
-if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
-  source /usr/share/vim/google/google.vim
-  " make sure this is just about the last line in the file, especially for corp-specific modes
-  set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
-endif
 
 " vim:ai:et:ts=2:sw=2:tw=80
