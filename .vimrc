@@ -474,7 +474,7 @@ Bundle 'gmarik/vundle'
 
 " other bundles...
 " YCM should probably come last... YOUCOMPLETEME IS HARD OKAY
-if (version >= 703 && has('patch584')) || version > 703
+if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584 or better for YCM...
   if GOOGLE_CORP_SPECIFIC
     function UpdateGoogleYcmBinaries()
       let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
