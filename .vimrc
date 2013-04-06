@@ -448,7 +448,8 @@ set sw=2
 
 " always show the status line
 set ls=2
-set stl=%<%f\ #%{changenr()}\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+set stl=%<%f\ #%{changenr()}
+set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 
 if MICROSOFT_CORP_SPECIFIC != 1
   set tw=80
@@ -660,6 +661,9 @@ endif
 
 call ZackBundle('tpope/vim-scriptease')
 call ZackBundle('Valloric/MatchTagAlways')
+
+let g:syntastic_check_on_open=1
+call ZackBundle('scrooloose/syntastic')
 
 " Don't touch this...
 call ProcessQueuedZackBundles()
