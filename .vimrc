@@ -494,8 +494,6 @@ endif
 " (override Google stuff by putting commands after this call)
 if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
   source /usr/share/vim/google/google.vim
-  " make sure this is just about the last line in the file, especially for corp-specific modes
-  set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
 endif
 
 " Fire up Pathogen and IPI so we can chainload package managers.
@@ -788,6 +786,11 @@ endif
 
 if !RESTRICTED_MODE
   syntax enable
+endif
+
+if GOOGLE_CORP_SPECIFIC
+  " make sure this is just about the last line in the file, especially for corp-specific modes
+  set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
 endif
 
 let g:ZM_vimrc_did_complete_load=1
