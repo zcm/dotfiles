@@ -622,6 +622,7 @@ endif
 " Color and window settings section
 if !RESTRICTED_MODE
   colo elflord " default for if we set nothing else ever
+  sil! colo vividchalk " this thing is sweet
 endif
 
 " window settings for gvim
@@ -632,6 +633,7 @@ if has("gui_running")
   " use desert by default, and if we have it, use zackvim
   colo desert
   sil! colo dante
+  sil! colo vividchalk " this thing is sweet
   sil! colo zackvim
 
   set guioptions+=c
