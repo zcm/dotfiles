@@ -254,6 +254,7 @@ if has("gui_running")
       if match(hostname(), "zmurray-linux.kir") != -1
         set lines=90
         set columns=154
+        winp 0 0
       endif
     else
       call NotepadWindowSize(1)
@@ -661,6 +662,9 @@ if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584
 endif
 
 call ZackBundle('gmarik/ingretu')
+call ZackBundle('xoria256.vim')
+call ZackBundle('altercation/vim-colors-solarized')
+call ZackBundle('tpope/vim-vividchalk')
 
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
