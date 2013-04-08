@@ -20,6 +20,18 @@ if has("gui_macvim")
   sil! set gfn=ProggySquare:h11
 endif
 
+if match($TERM, "screen") != -1
+  set term=xterm-256color
+  let g:using_gnu_screen = 1
+else
+  let g:using_gnu_screen = 0
+endif
+
+" Override vim's terminal detection for GNOME Terminal (when not still running in a GNU screen).
+if !has("gui_running") && has("unix") && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
+  set t_Co=256
+endif
+
 let g:dock_hidden = 0
 
 " on Mac OS X, gets the computer name (not the host name)
@@ -218,8 +230,6 @@ endif
 " stuff that doesn't require the GUI to be running should go
 " in the block above this one
 if has("gui_running")
-  call NotepadWindowSize(1)
-
   " use desert by default, and if we have it, use zackvim
   colo desert
   sil! colo dante
@@ -228,7 +238,27 @@ if has("gui_running")
   set guioptions+=c
   set guioptions-=R " turn off the right scrollbar
   set guioptions-=L " turn off the left scrollbar
-  if has("macunix")
+
+  if has("unix") || has("gui_win32")
+    " also, kill win32/unix gvim's toolbar
+    set guioptions-=T
+    " and the tearoff menu items
+    set guioptions-=t
+    " and the standard menus themselves
+    set guioptions-=m
+  endif
+
+  " Set window position and size
+  if has("unix")
+    if GOOGLE_CORP_SPECIFIC
+      if match(hostname(), "zmurray-linux.kir") != -1
+        set lines=90
+        set columns=154
+      endif
+    else
+      call NotepadWindowSize(1)
+    endif
+  elseif has("macunix")
     if !RESTRICTED_MODE
       let __computername = MacGetComputerName()
       if __computername == "Euphoria"
@@ -255,12 +285,6 @@ if has("gui_running")
     " au zcm_windows_maximize GUIEnter * simalt ~x
     " aug END
 
-    " also, kill win32 gvim's toolbar
-    set guioptions-=T
-    " and the tearoff menu items
-    set guioptions-=t
-    " and the standard menus themselves
-    set guioptions-=m
     " and start from our My Documents (or other home) directory
     cd ~
 
@@ -276,6 +300,9 @@ if has("gui_running")
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
     endif
+  elseif
+    " If we don't have any idea what is going on or where we are...
+      call NotepadWindowSize(1)
   endif
 endif
 
