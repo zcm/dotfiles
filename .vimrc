@@ -221,92 +221,6 @@ elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.",
   let MICROSOFT_CORP_SPECIFIC=1
 endif
 
-if !RESTRICTED_MODE
-  colo elflord " default for if we set nothing else ever
-endif
-
-" window settings for gvim
-" please only put GUI based settings in this section...
-" stuff that doesn't require the GUI to be running should go
-" in the block above this one
-if has("gui_running")
-  " use desert by default, and if we have it, use zackvim
-  colo desert
-  sil! colo dante
-  sil! colo zackvim
-
-  set guioptions+=c
-  set guioptions-=R " turn off the right scrollbar
-  set guioptions-=L " turn off the left scrollbar
-
-  if has("unix") || has("gui_win32")
-    " also, kill win32/unix gvim's toolbar
-    set guioptions-=T
-    " and the tearoff menu items
-    set guioptions-=t
-    " and the standard menus themselves
-    set guioptions-=m
-  endif
-
-  " Set window position and size
-  if has("unix")
-    if GOOGLE_CORP_SPECIFIC
-      if match(hostname(), "zmurray-linux.kir") != -1
-        set lines=90
-        set columns=154
-        winp 0 0
-      endif
-    else
-      call NotepadWindowSize(1)
-    endif
-  elseif has("macunix")
-    if !RESTRICTED_MODE
-      let __computername = MacGetComputerName()
-      if __computername == "Euphoria"
-        winp 351 187
-      elseif __computername == "Bliss"
-        winp 461 262
-      elseif __computername == "Harmony"
-        "winp 1 0
-        " we need to use an autocommand to make this magic happen because
-        " Vim hates it when we go out of desktop bounds before it loads the
-        " freaking window
-        "aug zcm_windows_maximize
-        "au zcm_windows_maximize GUIEnter * set lines=59
-        "au zcm_windows_maximize GUIEnter * set columns=210
-        "au zcm_windows_maximize GUIEnter * call FullScreenMaximize_Harmony()
-        "aug END
-      elseif __computername == "Tim Menzies’s Mac mini"
-      endif
-    endif
-  elseif has("gui_win32")
-    " screw it, on windows we just maximize
-    " NOT TODAY! --zack, on Windows 7 (uncomment to enable automaximiz3e)
-    " aug zcm_windows_maximize
-    " au zcm_windows_maximize GUIEnter * simalt ~x
-    " aug END
-
-    " and start from our My Documents (or other home) directory
-    cd ~
-
-    " set a font? (I'm cool with not doing this right now in Windows.)
-    " set gfn=Lucida_Console:h10:cANSI
-    " OMG CONSOLAS NOM NOM NOM
-    sil! set gfn=Consolas
-
-    " If we're running on the Microsoft campus, then we want to do a few extra
-    " things...
-    if MICROSOFT_CORP_SPECIFIC
-      " Microsoft does not obey the 80 character limit, so the window should
-      " really be bigger. Double ought to do it. --zack
-      call NotepadWindowSize(2)
-    endif
-  elseif
-    " If we don't have any idea what is going on or where we are...
-      call NotepadWindowSize(1)
-  endif
-endif
-
 if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
   " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
   " ohome at MS, so I need to put it somewhere else in order to make sure
@@ -704,6 +618,95 @@ if GOOGLE_CORP_SPECIFIC
 endif
 
 " End bundle section
+
+" Color and window settings section
+if !RESTRICTED_MODE
+  colo elflord " default for if we set nothing else ever
+endif
+
+" window settings for gvim
+" please only put GUI based settings in this section...
+" stuff that doesn't require the GUI to be running should go
+" in the block above this one
+if has("gui_running")
+  " use desert by default, and if we have it, use zackvim
+  colo desert
+  sil! colo dante
+  sil! colo zackvim
+
+  set guioptions+=c
+  set guioptions-=R " turn off the right scrollbar
+  set guioptions-=L " turn off the left scrollbar
+
+  if has("unix") || has("gui_win32")
+    " also, kill win32/unix gvim's toolbar
+    set guioptions-=T
+    " and the tearoff menu items
+    set guioptions-=t
+    " and the standard menus themselves
+    set guioptions-=m
+  endif
+
+  " Set window position and size
+  if has("unix")
+    if GOOGLE_CORP_SPECIFIC
+      if match(hostname(), "zmurray-linux.kir") != -1
+        set lines=90
+        set columns=154
+        winp 0 0
+      endif
+    else
+      call NotepadWindowSize(1)
+    endif
+  elseif has("macunix")
+    if !RESTRICTED_MODE
+      let __computername = MacGetComputerName()
+      if __computername == "Euphoria"
+        winp 351 187
+      elseif __computername == "Bliss"
+        winp 461 262
+      elseif __computername == "Harmony"
+        "winp 1 0
+        " we need to use an autocommand to make this magic happen because
+        " Vim hates it when we go out of desktop bounds before it loads the
+        " freaking window
+        "aug zcm_windows_maximize
+        "au zcm_windows_maximize GUIEnter * set lines=59
+        "au zcm_windows_maximize GUIEnter * set columns=210
+        "au zcm_windows_maximize GUIEnter * call FullScreenMaximize_Harmony()
+        "aug END
+      elseif __computername == "Tim Menzies’s Mac mini"
+      endif
+    endif
+  elseif has("gui_win32")
+    " screw it, on windows we just maximize
+    " NOT TODAY! --zack, on Windows 7 (uncomment to enable automaximiz3e)
+    " aug zcm_windows_maximize
+    " au zcm_windows_maximize GUIEnter * simalt ~x
+    " aug END
+
+    " and start from our My Documents (or other home) directory
+    cd ~
+
+    " set a font? (I'm cool with not doing this right now in Windows.)
+    " set gfn=Lucida_Console:h10:cANSI
+    " OMG CONSOLAS NOM NOM NOM
+    sil! set gfn=Consolas
+
+    " If we're running on the Microsoft campus, then we want to do a few extra
+    " things...
+    if MICROSOFT_CORP_SPECIFIC
+      " Microsoft does not obey the 80 character limit, so the window should
+      " really be bigger. Double ought to do it. --zack
+      call NotepadWindowSize(2)
+    endif
+  elseif
+    " If we don't have any idea what is going on or where we are...
+      call NotepadWindowSize(1)
+  endif
+endif
+
+" End color and window settings section
 
 
 " Autocommand section -- goes after bundle section since autocommands may
