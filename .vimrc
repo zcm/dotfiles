@@ -615,6 +615,13 @@ call ProcessQueuedZackBundles()
 if GOOGLE_CORP_SPECIFIC
   Glug blaze
   Glug g4
+  Glug syntastic-google
+
+  " Extra google-specific config opts
+  let g:syntastic_java_checkers = ['glint']
+  let g:syntastic_borg_checkers = ['borgcfg']
+  let g:syntastic_gcl_checkers = ['gcl']
+  let g:syntastic_python_checkers = ['pyflakes']
 endif
 
 " End bundle section
