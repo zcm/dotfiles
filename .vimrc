@@ -603,6 +603,7 @@ if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
 endif
 
 call ZackBundle('tpope/vim-scriptease')
+call ZackBundle('tpope/vim-dispatch')
 call ZackBundle('Valloric/MatchTagAlways')
 
 let g:syntastic_check_on_open=1
@@ -709,7 +710,7 @@ if has("gui_running")
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
     endif
-  elseif
+  else
     " If we don't have any idea what is going on or where we are...
       call NotepadWindowSize(1)
   endif
