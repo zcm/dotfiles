@@ -190,11 +190,6 @@ elseif(CheckRunningAtGoogle())
     aug ZCM_GoogleGtagsResize
     au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
     aug END
-    if exists("*GtagOmniCompletion")
-      aug ZCM_GoogleGtagsOmniCompletion
-      au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
-      aug END
-    endif
     source /usr/share/vim/google/gtags.vim
     call Google_RecheckGtlistOrientationBounds()
     let g:google_tags_list_format='long'
@@ -616,7 +611,10 @@ endif
 " Color and window settings section
 if !RESTRICTED_MODE
   colo elflord " default for if we set nothing else ever
-  sil! colo vividchalk " this thing is sweet
+  if !has("win32") || has("gui_running")
+    " oh god please no, not in cmd.exe. it literally looks like poop everywhere
+    sil! colo vividchalk " this thing is sweet
+  endif
 endif
 
 " window settings for gvim
@@ -772,7 +770,13 @@ if has("autocmd")
   au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
   aug END
 
-  if !GOOGLE_CORP_SPECIFIC
+  if GOOGLE_CORP_SPECIFIC
+    if !PLAN_TO_USE_YCM_OMNIFUNC && exists("*GtagOmniCompletion")
+      aug ZCM_GoogleGtagsOmniCompletion
+      au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
+      aug END
+    endif
+  else
     au BufNewFile,BufRead *.java compiler javac
   endif
   if !PLAN_TO_USE_YCM_OMNIFUNC && filereadable($HOME . "/vimfiles/autoload/javacomplete.vim")

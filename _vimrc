@@ -17,8 +17,6 @@ else
   source $HOME\.vimrc
 endif
 
-let &runtimepath=s:runtimepath_save
-unlet s:runtimepath_save
 let $HOME=HOME_env_save
 let $VIM=VIM_env_save
 let $MACVIMRC='F:/Users/dremelofdeath/.vimrc'
