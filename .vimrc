@@ -20,7 +20,7 @@ if has("gui_macvim")
   sil! set gfn=ProggySquare:h11
 endif
 
-if match($TERM, "screen") != -1
+if !has("win32") && match($TERM, "screen") != -1
   set term=xterm-256color
   let g:using_gnu_screen = 1
 else
@@ -490,7 +490,7 @@ function ZackBundle(...) abort
     " later with :IP <bundle name>.
     if load_method == 'normal'  " if a:4 is true, go ahead and load the plugin...
       " This is the 'normal' way to load the plugin, using rtp.
-      execute 'set rtp=' . l:bundle_rtp
+      let &rtp = l:bundle_rtp
     elseif load_method == 'force_ipi'
       " We can force the plugin to load using IPI if we want.
       if s:processing_queued_bundles
