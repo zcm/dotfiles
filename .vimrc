@@ -36,9 +36,12 @@ let g:dock_hidden = 0
 
 " on Mac OS X, gets the computer name (not the host name)
 if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
+  let g:maccomputernamestring = ""
   function MacGetComputerName()
-    let computernamestring = system("scutil --get ComputerName")
-    return strpart(computernamestring, 0, strlen(computernamestring)-1)
+    if g:maccomputernamestring == ""
+      let g:maccomputernamestring = system("scutil --get ComputerName")
+    endif
+    return strpart(g:maccomputernamestring, 0, strlen(g:maccomputernamestring)-1)
   endfunction
 
   " on Mac OS X, toggle hiding the dock
