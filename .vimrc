@@ -370,8 +370,6 @@ map <xF1> <F1>
 let &cpo=s:cpo_save
 unlet s:cpo_save
 
-set report=1
-
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
 inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
@@ -384,24 +382,6 @@ hi! link TagListFileName VisualNOS
 
 "hi Pmenu ctermfg=7 ctermbg=5
 "hi PmenuSel ctermfg=5 ctermbg=6
-
-set ut=10
-
-" ts and sw need to be the same for << and >> to work correctly!
-set ts=2
-set sw=2
-
-" always show the status line
-set ls=2
-set stl=%<%f\ #%{changenr()}
-set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*\ %h%m%r%=%-14.(%l,%c%V%)\ %P
-
-if MICROSOFT_CORP_SPECIFIC != 1
-  set tw=80
-endif
-
-" only use spaces instead of tabs
-set expandtab
 
 if filereadable($VIMRUNTIME . "/macros/matchit.vim")
   source $VIMRUNTIME/macros/matchit.vim
@@ -607,7 +587,10 @@ endif
 
 call ZackBundle('tpope/vim-scriptease')
 call ZackBundle('tpope/vim-dispatch')
-call ZackBundle('Valloric/MatchTagAlways')
+
+if has("python")
+  call ZackBundle('Valloric/MatchTagAlways')
+endif
 
 let g:syntastic_check_on_open=1
 call ZackBundle('scrooloose/syntastic')
@@ -803,6 +786,29 @@ endif
 if !RESTRICTED_MODE
   syntax enable
 endif
+
+set report=1
+
+set ut=10
+
+" ts and sw need to be the same for << and >> to work correctly!
+set ts=2
+set sw=2
+
+" always show the status line
+set ls=2
+set stl=%<%f\ #%{changenr()}
+if exists("*SyntasticStatuslineFlag")
+  set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
+endif
+set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+
+if MICROSOFT_CORP_SPECIFIC != 1
+  set tw=80
+endif
+
+" only use spaces instead of tabs
+set expandtab
 
 if GOOGLE_CORP_SPECIFIC
   " make sure this is just about the last line in the file, especially for corp-specific modes
