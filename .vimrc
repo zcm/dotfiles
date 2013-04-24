@@ -555,6 +555,7 @@ call ZackBundle('gmarik/ingretu')
 call ZackBundle('xoria256.vim')
 call ZackBundle('altercation/vim-colors-solarized')
 call ZackBundle('tpope/vim-vividchalk')
+call ZackBundle('javacomplete')
 
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
@@ -771,7 +772,7 @@ if has("autocmd")
   aug END
 
   if GOOGLE_CORP_SPECIFIC
-    if !PLAN_TO_USE_YCM_OMNIFUNC && exists("*GtagOmniCompletion")
+    if !PLAN_TO_USE_YCM_OMNIFUNC && exists('*GtagOmniCompletion')
       aug ZCM_GoogleGtagsOmniCompletion
       au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
       aug END
@@ -779,8 +780,14 @@ if has("autocmd")
   else
     au BufNewFile,BufRead *.java compiler javac
   endif
-  if !PLAN_TO_USE_YCM_OMNIFUNC && filereadable($HOME . "/vimfiles/autoload/javacomplete.vim")
+  " This appears to be a bug in Vim -- submodule functions are not visible to
+  " exists() until after the first time they are called, which is weird.
+  " Silently attempt an invalid call in order to workaround this bug...
+  sil! call javacomplete#Complete()
+  if exists('*javacomplete#Complete')
+    aug ZCM_UseJavaCompleteWhenAvailable
     au Filetype java setlocal omnifunc=javacomplete#Complete
+    aug END
   endif
 endif
 
