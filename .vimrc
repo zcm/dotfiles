@@ -435,6 +435,10 @@ function ProcessQueuedZackBundles() abort
   endfor
 endfunction
 
+" NOTE: use force_ipi to inject plugins DURING .vimrc execution -- this means
+" you can check for existence of plugin functions and do feature detection. If
+" you don't do this, use RTP instead
+
 function ZackBundle(...) abort
   if len(a:000) == 1
     if stridx(a:1, '/') == -1
@@ -555,7 +559,7 @@ call ZackBundle('gmarik/ingretu')
 call ZackBundle('xoria256.vim')
 call ZackBundle('altercation/vim-colors-solarized')
 call ZackBundle('tpope/vim-vividchalk')
-call ZackBundle('javacomplete')
+"call ZackBundle('javacomplete', 'force_ipi')
 
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
@@ -589,7 +593,7 @@ if has("python")
 endif
 
 let g:syntastic_check_on_open=1
-call ZackBundle('scrooloose/syntastic')
+call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
 " Don't touch this...
 call ProcessQueuedZackBundles()
@@ -605,6 +609,26 @@ if GOOGLE_CORP_SPECIFIC
   let g:syntastic_borg_checkers = ['borgcfg']
   let g:syntastic_gcl_checkers = ['gcl']
   let g:syntastic_python_checkers = ['pyflakes']
+
+  let g:blazevim_execution = 'foreground' " until background is fixed...
+
+  " Blaze hotkeys
+  " Load errors from blaze
+  nnoremap ,be :call blaze#LoadErrors()<cr>:botright cw<cr>
+  " View build log
+  nnoremap ,bl :call blaze#ViewCommandLog()<cr>
+  " Run blaze on targets
+  nnoremap ,bd :call blaze#BuildOrTestTargets()<cr>
+  " Run 'update deps' on targets
+  nnoremap ,bu :call blaze#UpdateTargetDeps()<cr>
+  " Run 'blaze build'
+  nnoremap ,bb :call blaze#BuildTargets()<cr>
+  " Run 'blaze test'
+  nnoremap ,bt :call blaze#TestTargets()<cr>
+  " Run 'blaze test' on the current file (only interesting for Java)
+  nnoremap ,bc :call blaze#TestCurrentFile()<cr>
+  " Run 'blaze test' on the current test method.
+  nnoremap ,bm :call blaze#TestCurrentMethod()<cr>
 endif
 
 " End bundle section
@@ -771,12 +795,17 @@ if has("autocmd")
   au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
   aug END
 
+  au QuickFixCmdPost,BufWinEnter,BufWinLeave * if &buftype == 'quickfix' | setlocal nonumber | endif
+
   if GOOGLE_CORP_SPECIFIC
     if !PLAN_TO_USE_YCM_OMNIFUNC && exists('*GtagOmniCompletion')
       aug ZCM_GoogleGtagsOmniCompletion
       au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
       aug END
     endif
+    " This might be the slightest bit of a google-specific hack, but I want ,bl
+    " to have nonumber set
+    au FileReadPost * if &buftype == 'nofile' | setlocal nonumber | endif
   else
     au BufNewFile,BufRead *.java compiler javac
   endif
@@ -809,7 +838,7 @@ set sw=2
 " always show the status line
 set ls=2
 set stl=%<%f\ #%{changenr()}
-if exists("*SyntasticStatuslineFlag")
+if exists('*SyntasticStatuslineFlag')
   set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
 endif
 set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
