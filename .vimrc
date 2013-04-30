@@ -46,11 +46,7 @@ if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
 
   " on Mac OS X, toggle hiding the dock
   function MacToggleDockHiding()
-    if has("autocmd")
-      if g:dock_hidden == 0
-        let g:dock_hidden = 1
-        " this is to make sure that the dock is unhidden on exit
-        aug zcm_dock_hiding
+    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1 " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
         au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
         aug END
       else
@@ -567,20 +563,35 @@ if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584
     " Can't make system calls in restricted mode, so we won't update in this case.
     if !RESTRICTED_MODE
       function UpdateGoogleYcmBinaries()
+        echom "Updating Google YCM files..."
         let ycm_core = "/google/data/ro/users/st/strahinja/ycm_core.so"
         let libclang = "/google/data/ro/users/kl/klimek/libclang.so"
         if filereadable(ycm_core) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+          echom "Updating ycm_core.so..."
           call system("cp " . ycm_core . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
         endif
         if filereadable(libclang) && isdirectory($HOME . "/vimfiles/ipi/YouCompleteMe/python")
+          echom "Updating libclang.so..."
           call system("cp " . libclang . " " . $HOME . "/vimfiles/ipi/YouCompleteMe/python/")
         endif
       endfunction
+      function RefetchDefaultGoogleYcmExtraConf()
+        let ycm_extra = "/google/data/ro/users/st/strahinja/.ycm_extra_conf.py"
+        if filereadable(ycm_extra) && isdirectory($HOME)
+          call system("sed -e \"s/PATH_TO_YCM_PYTHON = .*$/PATH_TO_YCM_PYTHON = os.path.expanduser('~\\/vimfiles\\/ipi\\/YouCompleteMe\\/python')/\" " . ycm_extra . " > ~/.ycm_extra_conf.py")
+          echom "Finished refetching .ycm_extra_conf.py."
+        endif
+      endfunction
       let local_ycm = $HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.so"
+      let local_ycm_extra = $HOME . "/.ycm_extra_conf.py"
       let local_clang = $HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.so"
       if !filereadable(local_ycm) || !filereadable(local_clang)
         call UpdateGoogleYcmBinaries()
       endif
+      if !filereadable(local_ycm_extra)
+        call RefetchDefaultGoogleYcmExtraConf()
+      endif
+      let g:ycm_confirm_extra_conf = 0
     endif
     " might consider doing this magic outside of google too...
   endif
