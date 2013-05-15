@@ -365,9 +365,7 @@ set backspace=2
 set number
 set autoindent
 
-filetype on
-filetype indent on
-filetype plugin on
+filetype plugin indent on
 
 let s:cpo_save=&cpo
 set cpo&vim
