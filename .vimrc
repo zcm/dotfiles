@@ -365,8 +365,6 @@ set backspace=2
 set number
 set autoindent
 
-filetype plugin indent on
-
 let s:cpo_save=&cpo
 set cpo&vim
 map! <xHome> <Home>
@@ -674,6 +672,8 @@ if GOOGLE_CORP_SPECIFIC
 endif
 
 " End bundle section
+
+filetype plugin indent on
 
 " Color and window settings section
 if !RESTRICTED_MODE
