@@ -553,8 +553,22 @@ Bundle 'gmarik/vundle'
 
 " other bundles...
 " YCM should probably come last... YOUCOMPLETEME IS HARD OKAY (okay, so maybe first...)
+" yes there is a section for YCM all to itself
+function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
+  if exists("g:zcm_you_can_complete_me")
+    return g:zcm_you_can_complete_me
+  endif
+  let l:right_version = (version >= 703 && has('patch584')) || version > 703 
+  let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
+  let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
+  let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
+  let g:zcm_you_can_complete_me = l:right_version && (l:windows_possible || has('unix'))
+  return g:zcm_you_can_complete_me
+endfunction
+
 let PLAN_TO_USE_YCM_OMNIFUNC = 0
-if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584 or better for YCM...
+
+if CheckIfYouCanCompleteMe()
   if GOOGLE_CORP_SPECIFIC
     " Can't make system calls in restricted mode, so we won't update in this case.
     if !RESTRICTED_MODE
@@ -593,6 +607,10 @@ if (version >= 703 && has('patch584')) || version > 703   " You need Vim 7.3.584
   endif
   let PLAN_TO_USE_YCM_OMNIFUNC = 1
   call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
+else
+  " If we're not going to be using YCM, we might as well give NeoComplCache a shot.
+  let g:neocomplcache_enable_at_startup = 1
+  call ZackBundle('Shougo/neocomplcache.vim')
 endif
 
 call ZackBundle('gmarik/ingretu')
