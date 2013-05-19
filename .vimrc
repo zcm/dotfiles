@@ -611,6 +611,9 @@ else
   " If we're not going to be using YCM, we might as well give NeoComplCache a shot.
   let g:neocomplcache_enable_at_startup = 1
   call ZackBundle('Shougo/neocomplcache.vim')
+  " <TAB>: completion.
+  inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+  inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
 endif
 
 call ZackBundle('gmarik/ingretu')
