@@ -701,7 +701,7 @@ filetype plugin indent on
 " Color and window settings section
 if !RESTRICTED_MODE
   colo elflord " default for if we set nothing else ever
-  if !has("win32") || has("gui_running")
+  if !(has("win32") || has("win64")) || has("gui_running")
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
     sil! colo vividchalk " this thing is sweet
   endif
