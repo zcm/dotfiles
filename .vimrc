@@ -635,6 +635,8 @@ endif
 let g:syntastic_check_on_open=1
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
+call ZackBundle('jeroenbourgois/vim-actionscript')
+
 " Don't touch this...
 call ProcessQueuedZackBundles()
 
