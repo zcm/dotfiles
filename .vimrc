@@ -558,7 +558,7 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
   endif
-  let l:right_version = (version >= 703 && has('patch584')) || version > 703 
+  let l:right_version = (version >= 703 && has('patch584')) || version > 703
   let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
   let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
   let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
@@ -570,6 +570,7 @@ let PLAN_TO_USE_YCM_OMNIFUNC = 0
 
 if CheckIfYouCanCompleteMe()
   let PLAN_TO_USE_YCM_OMNIFUNC = 1
+  let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
   if !GOOGLE_CORP_SPECIFIC
     " This should now be a Glug module while at Google
     call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
