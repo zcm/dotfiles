@@ -624,7 +624,9 @@ endif
 let g:syntastic_check_on_open=1
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
-call ZackBundle('jeroenbourgois/vim-actionscript')
+if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
+  call ZackBundle('jeroenbourgois/vim-actionscript')
+endif
 
 " Don't touch this...
 call ProcessQueuedZackBundles()
