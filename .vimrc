@@ -560,8 +560,8 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   endif
   let l:right_version = (version >= 703 && has('patch584')) || version > 703
   let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
-  let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
-  let l:windows_possible = l:windows_possible && filereadable("$HOME/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
+  let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
+  let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
   let g:zcm_you_can_complete_me = l:right_version && (l:windows_possible || has('unix'))
   return g:zcm_you_can_complete_me
 endfunction
@@ -674,7 +674,14 @@ if !RESTRICTED_MODE
   colo elflord " default for if we set nothing else ever
   if !(has("win32") || has("win64")) || has("gui_running")
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
-    sil! colo vividchalk " this thing is sweet
+    if filereadable($HOME . "/vimfiles/ipi/vim-vividchalk/colors/vividchalk.vim")
+      sil! colo vividchalk " this thing is sweet
+    elseif filereadable($HOME . "/vimfiles/colors/dante.vim")
+      sil! colo dante
+    elseif has("gui_running")
+      colo desert
+      " here lies zackvim, where it has gone I will never know
+    endif
   endif
 endif
 
@@ -683,12 +690,6 @@ endif
 " stuff that doesn't require the GUI to be running should go
 " in the block above this one
 if has("gui_running")
-  " use desert by default, and if we have it, use zackvim
-  colo desert
-  sil! colo dante
-  sil! colo vividchalk " this thing is sweet
-  sil! colo zackvim
-
   set guioptions+=c
   set guioptions-=R " turn off the right scrollbar
   set guioptions-=L " turn off the left scrollbar
