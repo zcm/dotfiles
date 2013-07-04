@@ -843,6 +843,10 @@ if has("autocmd")
     " This might be the slightest bit of a google-specific hack, but I want ,bl
     " to have nonumber set
     au FileReadPost * if &buftype == 'nofile' | setlocal nonumber | endif
+    " Start a changelist description at a convenient location in piper
+    aug ZCM_Google_PiperTmpDescription
+    au ZCM_Google_PiperTmpDescription BufReadPost .pipertmp* execute search("Description:$")+1
+    aug END
   else
     au BufNewFile,BufRead *.java compiler javac
   endif
