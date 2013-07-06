@@ -676,10 +676,12 @@ if !RESTRICTED_MODE
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
     if filereadable($HOME . "/vimfiles/ipi/vim-vividchalk/colors/vividchalk.vim")
       sil! colo vividchalk " this thing is sweet
-    elseif filereadable($HOME . "/vimfiles/colors/dante.vim")
-      sil! colo dante
     elseif has("gui_running")
-      colo desert
+      if filereadable($HOME . "/vimfiles/colors/dante.vim")
+        sil! colo dante
+      else
+        colo desert
+      endif
       " here lies zackvim, where it has gone I will never know
     endif
   endif
