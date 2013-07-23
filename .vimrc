@@ -399,16 +399,16 @@ nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
 nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
 
 " match indent
-nnoremap =. :<C-U>exe line(".").",".(v:count+line("."))."left ".string(indent(line(".")-1))<CR>
+nnoremap =. :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1))<CR>
 
 " match indent and shift
 if (!GOOGLE_CORP_SPECIFIC)
-  nnoremap => :<C-U>exe line(".").",".(v:count+line("."))."left ".string(indent(line(".")-1)+&sw)<CR>
-  nnoremap =< :<C-U>exe line(".").",".(v:count+line("."))."left ".string(indent(line(".")-1)-&sw)<CR>
+  nnoremap => :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)+&sw)<CR>
+  nnoremap =< :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)-&sw)<CR>
 else
   " Hack this for google, their style is a little weird here.
-  nnoremap => :<C-U>exe line(".").",".(v:count+line("."))."left ".string(indent(line(".")-1)+&sw*2)<CR>
-  nnoremap =< :<C-U>exe line(".").",".(v:count+line("."))."left ".string(indent(line(".")-1)-&sw*2)<CR>
+  nnoremap => :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)+&sw*2)<CR>
+  nnoremap =< :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)-&sw*2)<CR>
 endif
 
 hi! link TagListFileName VisualNOS
