@@ -106,8 +106,16 @@ function FullScreenMaximize_Bliss()
 endfunction
 
 function NotepadWindowSize(widthfactor)
-  set lines=50
-  let &columns=88*a:widthfactor
+  call BaseNotepadWindowSize(88, a:widthfactor)
+endfunction
+
+function JavaNotepadWindowSize(widthfactor)
+  call BaseNotepadWindowSize(110, a:widthfactor)
+endfunction
+
+function BaseNotepadWindowSize(basewidth, widthfactor)
+  let &lines=(a:basewidth / 88) * 50
+  let &columns=a:basewidth * a:widthfactor
 endfunction
 
 function RecalculatePluginSplitWidth()
@@ -770,6 +778,10 @@ if has("gui_running")
       " Microsoft does not obey the 80 character limit, so the window should
       " really be bigger. Double ought to do it. --zack
       call NotepadWindowSize(2)
+    else
+      " A 100 default character limit for when we're hacking on Windows makes
+      " some remote amount of sense, I think.
+      call JavaNotepadWindowSize(1)
     endif
   else
     " If we don't have any idea what is going on or where we are...
