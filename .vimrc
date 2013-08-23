@@ -317,8 +317,9 @@ if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
       if executable(l:wgetcmd)
         let l:MsysSetupExe = "Git-1.8.1.2-preview20130201.exe"
         let l:MsysGitUrl = "https://msysgit.googlecode.com/files/" . l:MsysSetupExe
+        let l:Temp = shellescape($TMP)
         echom "Attempting to fetch " . l:MsysGitUrl . "..."
-        call RunInChainloadBatchFile('"' . l:wgetcmd . '" --no-check-certificate -P ' . shellescape($TMP) . ' ' . l:MsysGitUrl)
+        call RunInChainloadBatchFile('"'.l:wgetcmd.'" --no-check-certificate -P '.lTemp.' '.l:MsysGitUrl)
         echom "Attempting to start setup..."
         call RunInChainloadBatchFile(shellescape($TMP . '\' . l:MsysSetupExe))
         if filereadable(l:MsysSetupExe)
@@ -800,6 +801,7 @@ if has("autocmd")
 
   " set custom syntaxes here, before syntax enable
   au BufNewFile,BufRead *.applescript set syn+=applescript
+  au BufNewFile,BufRead *.hx set syn+=haxe
 
   if MICROSOFT_CORP_SPECIFIC
     au BufWinEnter,BufNewFile,BufRead *.err set ft=err
