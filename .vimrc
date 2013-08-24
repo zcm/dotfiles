@@ -650,6 +650,19 @@ if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
   call ZackBundle('jeroenbourgois/vim-actionscript')
 endif
 
+"call ZackBundle('tlib')
+"call ZackBundle('MarcWeber/vim-addon-views')
+"call ZackBundle('MarcWeber/vim-addon-mw-utils')
+"call ZackBundle('MarcWeber/vim-addon-actions')
+"call ZackBundle('MarcWeber/vim-addon-goto-thing-at-cursor')
+"call ZackBundle('MarcWeber/vim-addon-background-cmd')
+"call ZackBundle('MarcWeber/vim-addon-completion')
+"call ZackBundle('MarcWeber/vim-addon-swfmill')
+"call ZackBundle('MarcWeber/vim-haxe-syntax')
+"call ZackBundle('MarcWeber/vim-addon-mw-utils')
+"call ZackBundle('MarcWeber/vim-addon-actions')
+"call ZackBundle('MarcWeber/vim-haxe')
+
 " Don't touch this...
 call ProcessQueuedZackBundles()
 
@@ -800,8 +813,8 @@ if has("autocmd")
   au VimEnter * set vb t_vb=
 
   " set custom syntaxes here, before syntax enable
-  au BufNewFile,BufRead *.applescript set syn+=applescript
-  au BufNewFile,BufRead *.hx set syn+=haxe
+  au BufNewFile,BufRead *.applescript set syn=applescript
+  au BufNewFile,BufRead *.hx set syn=haxe
 
   if MICROSOFT_CORP_SPECIFIC
     au BufWinEnter,BufNewFile,BufRead *.err set ft=err
