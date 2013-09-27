@@ -363,6 +363,22 @@ if !RESTRICTED_MODE
   endfunction
 endif
 
+function! ZCM_GetVisualSelection()
+  " Why is this not a built-in VimScript function?
+  " Stolen from here: http://stackoverflow.com/questions/1533565/how-to-get-visually-selected-text-in-vimscript
+  let [lnum1, col1] = getpos("'<")[1:2]
+  let [lnum2, col2] = getpos("'>")[1:2]
+  " this is a bug fix from me: when you first start vim, there is no selection
+  " and this logic fails because col1 and col2 are both 0 (only true on start)
+  if col1 == 0 || col2 == 0
+    return ""
+  endif
+  let lines = getline(lnum1, lnum2)
+  let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
+  let lines[0] = lines[0][col1 - 1:]
+  return join(lines, "\n")
+endfunction
+
 " This section should be used for custom mappings and personal editor settings,
 " before we start taking changes from our environment (e.g. Google).
 
@@ -399,6 +415,12 @@ map <xF1> <F1>
 let &cpo=s:cpo_save
 unlet s:cpo_save
 
+" It is now an error to run a normal mode change command over an empty region.
+" See :help cpo-E for more info. I have absolutely no clue how I found this, but
+" I really want it so that my custom onoremaps don't trigger changes when they
+" can't find their target.
+set cpo+=E
+
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
 inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
@@ -419,6 +441,73 @@ else
   nnoremap => :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)+&sw*2)<CR>
   nnoremap =< :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)-&sw*2)<CR>
 endif
+
+function! ZCM_Visual_PerformBlockMatchingMagic(left_char, right_char)
+  exe "silent! normal! va".a:left_char."\<Esc>"
+  let l:selection = ZCM_GetVisualSelection()
+  exe "silent! normal! \<Esc>va".a:left_char
+  if strlen(l:selection) <= 1
+    let [lnum, lcol] = getpos('.')[1:2]
+    exe "silent! normal! \<Esc>f".a:left_char
+    let l:char = getline('.')[col('.')-1]
+    if char == a:left_char
+      silent! normal! %
+      let l:char = getline('.')[col('.')-1]
+      if l:char == a:right_char
+        silent! normal! %v%
+      else
+        silent! call cursor(lnum, lcol)
+      endif
+    endif
+  endif
+endfunction
+
+function! ZCM_Visual_PerformInnerBlockMatchingMagic(left_char, right_char)
+  call ZCM_Visual_PerformBlockMatchingMagic(a:left_char, a:right_char)
+  exe "silent! normal! \<Esc>"
+  let l:char = getline('.')[col('.')-1]
+  if char == a:right_char
+    silent! normal! %lvh%h
+  endif
+endfunction
+
+" Delicious, delicious custom text objects. Operator-pending mode FOR THE WIN.
+
+" replaces a( motion with a way better version
+vnoremap <silent> a( :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
+vnoremap <silent> a) :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
+vnoremap <silent> ab :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
+omap <silent> a( :<C-U>normal vab<CR>
+omap <silent> a) :<C-U>normal vab<CR>
+omap <silent> ab :<C-U>normal vab<CR>
+" replaces i( motion with a way better version
+vnoremap <silent> i( :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
+vnoremap <silent> i) :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
+vnoremap <silent> ib :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
+omap <silent> i( :<C-U>normal vib<CR>
+omap <silent> i) :<C-U>normal vib<CR>
+omap <silent> ib :<C-U>normal vib<CR>
+" same as above for a[ a] a{ a} i[ i] i{ i} motions
+vnoremap <silent> a[ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
+vnoremap <silent> a] :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
+omap <silent> a[ :<C-U>normal va[<CR>
+omap <silent> a] :<C-U>normal va]<CR>
+vnoremap <silent> i[ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
+vnoremap <silent> i] :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
+omap <silent> i[ :<C-U>normal vi[<CR>
+omap <silent> i] :<C-U>normal vi]<CR>
+vnoremap <silent> a{ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
+vnoremap <silent> a} :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
+vnoremap <silent> aB :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
+omap <silent> a{ :<C-U>normal va{<CR>
+omap <silent> a} :<C-U>normal va}<CR>
+omap <silent> aB :<C-U>normal vaB<CR>
+vnoremap <silent> i{ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
+vnoremap <silent> i} :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
+vnoremap <silent> iB :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
+omap <silent> i{ :<C-U>normal vi{<CR>
+omap <silent> i} :<C-U>normal vi}<CR>
+omap <silent> iB :<C-U>normal viB<CR>
 
 hi! link TagListFileName VisualNOS
 
