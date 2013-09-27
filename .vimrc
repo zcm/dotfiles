@@ -442,6 +442,11 @@ else
   nnoremap =< :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)-&sw*2)<CR>
 endif
 
+" Keep search matches in the middle of the window.
+" (stolen from: https://bitbucket.org/sjl/dotfiles/src/8bcaac8a526e0c32b477226a9e394153178e60ca/vim/vimrc?at=default)
+nnoremap n nzzzv
+nnoremap N Nzzzv
+
 function! ZCM_Visual_PerformBlockMatchingMagic(left_char, right_char)
   exe "silent! normal! va".a:left_char."\<Esc>"
   let l:selection = ZCM_GetVisualSelection()
