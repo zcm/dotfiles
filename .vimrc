@@ -678,7 +678,8 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
   let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
   let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
-  let g:zcm_you_can_complete_me = l:right_version && (l:windows_possible || has('unix'))
+  " screw mac for now... it takes WAY too much work to get YCM working on non-Linux things...
+  let g:zcm_you_can_complete_me = l:right_version && !has('macunix') && (l:windows_possible || has('unix'))
   return g:zcm_you_can_complete_me
 endfunction
 
