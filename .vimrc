@@ -525,8 +525,10 @@ endif
 
 " and here, if we're running at Google, we will take their changes
 " (override Google stuff by putting commands after this call)
+let GOOGLE_HAS_GOOGLE_VIM=0
 if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
   source /usr/share/vim/google/google.vim
+  let GOOGLE_HAS_GOOGLE_VIM=1
 endif
 
 " Fire up Pathogen and IPI so we can chainload package managers.
@@ -762,7 +764,7 @@ endif
 call ProcessQueuedZackBundles()
 
 " Glug packages...
-if GOOGLE_CORP_SPECIFIC
+if GOOGLE_CORP_SPECIFIC && GOOGLE_HAS_GOOGLE_VIM
   Glug blaze
   Glug g4
   Glug syntastic-google
