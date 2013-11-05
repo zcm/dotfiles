@@ -1,0 +1,19 @@
+{
+  "vim": {
+    "files": [
+      "vimfiles",
+      ".vimrc",
+      {"from": "cats", "to": "dogs"}
+    ]
+  },
+  "triangle": {
+    "depends": ["square", "circle"]
+  },
+  "circle": {
+    "depends": "square",
+    "file": "mrow.zip"
+  },
+  "square": {
+    "file": "rowf.zip"
+  }
+}
