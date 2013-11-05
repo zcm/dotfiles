@@ -1,0 +1,9 @@
+{
+  "vim": {
+    "files": [
+      "vimfiles",
+      ".vimrc",
+      "..vimrc.un~"
+    ]
+  }
+}
