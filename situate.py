@@ -8,6 +8,7 @@ import argparse
 import errno
 import json
 import os
+import platform
 import subprocess
 import sys
 
@@ -94,13 +95,37 @@ class Operation:
     raise NotImplementedError("process() must be overridden")
 
 
-class FileOperation(Operation):
-  Types = {
+class OperationSets:
+  Unix = {
       #'symlink': 'ln -s "%s" "%s"',
       #'symlink': lambda x, y: Log.info("x: %s, y: %s" % (str(x), str(y))),
       'symlink': lambda x, y: os.symlink(x, y),
       'copy': 'cp "%s" "%s"',
   }
+  Windows = {
+      'symlink': lambda x, y: OperationSets.windows_symlink(x, y),
+      'copy': 'copy "%s" "%s"',
+  }
+
+  @staticmethod
+  def get_op_set():
+    if platform.system() == 'Windows':
+      return OperationSets.Windows
+    return OperationsSets.Unix
+
+  @staticmethod
+  def windows_symlink(x, y):
+    flags = []
+    if os.path.isdir(x):
+      flags.append("/D")
+    # Note here that on Windows the x and y are backwards.
+    actual_command = 'cmd /c mklink %s "%s" "%s"' % (' '.join(flags), y, x)
+    Log.verbose('Creating a Windows symlink via: %s' % actual_command)
+    subprocess.check_call(actual_command)
+
+
+class FileOperation(Operation):
+  Types = OperationSets.get_op_set()
 
   def __init__(self, package, type, operand1='', operand2=''):
     self.package = package
@@ -114,7 +139,9 @@ class FileOperation(Operation):
       self.command(from_target, to_target)
     except TypeError:
       # Not a function, it's a shell command.
-      subprocess.check_call(self.command)
+      actual_command = self.command % (from_target, to_target)
+      Log.verbose("running shell command: %s" % actual_command)
+      subprocess.check_call(actual_command)
 
   def process(self, from_path, to_path):
     from_target = os.path.join(from_path, self.package, self.operand1)
@@ -411,6 +438,15 @@ def main():
   Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
   Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
   Log.info('')
+
+  # On Windows, we need to verify first that we are elevated.
+  if platform.system() == 'Windows':
+    try:
+      subprocess.check_call('cmd /q /c at > NUL')
+    except subprocess.CalledProcessError:
+      Log.fail('You must run this script from an elevated command prompt.')
+      Log.fail('Right-click cmd.exe and choose "Run as administrator".')
+      sys.exit(1)
 
   Log.info('finding the symbol map')
   symmap_path = os.path.join(args.script_path, args.symmap)
