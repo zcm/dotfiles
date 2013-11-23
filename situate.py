@@ -25,6 +25,13 @@ parser.add_argument('-v', '--verbose',
 )
 parser.set_defaults(feature=False)
 
+parser.add_argument('--clean',
+    dest = 'clean',
+    action = 'store_true',
+    help = 'erase a current situate deployment and start over',
+)
+parser.set_defaults(clean=False)
+
 parser.add_argument('-n', '--dry_run',
     dest = 'dry_run',
     action = 'store_true',
@@ -101,10 +108,12 @@ class OperationSets:
       #'symlink': lambda x, y: Log.info("x: %s, y: %s" % (str(x), str(y))),
       'symlink': lambda x, y: os.symlink(x, y),
       'copy': 'cp "%s" "%s"',
+      'delete': lambda x, y: OperationSets.shared_delete(x),
   }
   Windows = {
       'symlink': lambda x, y: OperationSets.windows_symlink(x, y),
       'copy': 'copy "%s" "%s"',
+      'delete': lambda unused_x, y: OperationSets.shared_delete(y),
   }
 
   @staticmethod
@@ -115,13 +124,53 @@ class OperationSets:
 
   @staticmethod
   def windows_symlink(x, y):
+    if os.path.exists(y):
+      # Just raise the error here to mimic the os.symlink() implementation
+      raise OSError(errno.EEXIST, "Symlink already exists")
     flags = []
     if os.path.isdir(x):
       flags.append("/D")
     # Note here that on Windows the x and y are backwards.
-    actual_command = 'cmd /c mklink %s "%s" "%s"' % (' '.join(flags), y, x)
+    actual_command = 'mklink %s "%s" "%s"' % (' '.join(flags), y, x)
     Log.verbose('Creating a Windows symlink via: %s' % actual_command)
-    subprocess.check_call(actual_command)
+    Log.verbose(subprocess.check_output(actual_command, shell=True))
+
+  @staticmethod
+  def is_windows_symlink(target):
+    if platform.system() == 'Windows':
+      command = 'fsutil reparsepoint query "%s"'
+      try:
+        output = subprocess.check_output(command % target)
+        return output.find('Symbolic Link') != -1
+      except subprocess.CalledProcessError:
+        return False
+    return False
+
+  @staticmethod
+  def shared_delete(x):
+    if os.path.isdir(x):
+      if OperationSets.is_windows_symlink(x):
+        try:
+          actual_command = 'rmdir "%s"' % x
+          Log.verbose('Deleting a Windows symlink via: %s' % actual_command)
+          subprocess.check_call(actual_command, shell=True)
+        except WindowsError as e:
+          # This is particularly weird... didn't we just check the file was a
+          # directory? That should return false if there's nothing there...
+          if e.errno == errno.ENOENT:
+            # Intercept the exception and throw one we understand for deletes
+            raise FileVanishedError('File %s was here, but not anymore...' % x)
+          raise e
+      else:
+        # This should happen for non-Windows symlinks and copies.
+        os.rmdir(x)
+    else:
+      try:
+        os.remove(x)
+      except OSError as e:
+        if e.errno == errno.ENOENT:
+          raise AlreadyDeletedError('File %s has already been deleted' % x)
+        raise e
 
 
 class FileOperation(Operation):
@@ -156,6 +205,8 @@ class FileOperation(Operation):
         else:
           with open(from_target):
             self.run_command(from_target, to_target)
+      except AlreadyDeletedError:
+        Log.warn('file already deleted: %s' % (to_target))
       except OSError as e:
         if e.errno == errno.EEXIST:
           Log.warn('file already exists: %s' % (to_target))
@@ -194,6 +245,14 @@ class SourceFileMissingError(OperationError):
 
 
 class AlreadyFailedError(OperationError):
+  pass
+
+
+class AlreadyDeletedError(OperationError):
+  pass
+
+
+class FileVanishedError(AlreadyDeletedError):
   pass
 
 
@@ -236,6 +295,7 @@ class Log:
   def success(text):
     Log.message(" OK ", bcolors.OKGREEN, text)
 
+
 def process_package_file(package_name, package_file):
   from_attr = ''
   to_attr=''
@@ -248,10 +308,14 @@ def process_package_file(package_name, package_file):
     from_attr = package_file
     to_attr = package_file
   Log.verbose("operation: symlink [%s -> %s]" % (from_attr, to_attr))
+  if args.clean:
+    return FileOperation(package_name, 'delete', from_attr, to_attr)
   return FileOperation(package_name, 'symlink', from_attr, to_attr)
+
 
 def process_package_files(package_name, package_files):
   return [process_package_file(package_name, each) for each in package_files]
+
 
 def process_package(package_name, symmap):
   package_obj = symmap[package_name]
@@ -286,10 +350,12 @@ def process_package(package_name, symmap):
 
   return package_ops
 
+
 def chain_from_stack(stack):
   chain = stack[:]
   chain.reverse()
   return chain
+
 
 def check_single_dependency(package_name, operations, dep_stack=[]):
   for each in dep_stack:
@@ -318,6 +384,7 @@ def check_single_dependency(package_name, operations, dep_stack=[]):
     # TODO(dremelofdeath): Consider using raise...from in Python 3.x later.
     raise NonexistentDependencyError(message), None, sys.exc_info()[2]
 
+
 def check_dependencies(operations):
   errors = None
   for each in operations:
@@ -333,6 +400,7 @@ def check_dependencies(operations):
       Log.fail(e.message)
   if errors:
     raise errors
+
 
 def perform_single_operation(package_name, operations, complete, failed={}):
   # First, check to see if this package is already complete
@@ -399,8 +467,9 @@ def perform_single_operation(package_name, operations, complete, failed={}):
   # And now mark this operation complete
   complete[package_name] = True
   
-  Log.success('package %s successfully situated!' % (package_name))
+  Log.success('package %s successfully %s!' % (package_name, get_verb()))
   return complete
+
 
 def perform_operations(operations):
   complete = {}
@@ -431,8 +500,23 @@ def perform_operations(operations):
 
   pkgs = len(complete)
   Log.success(
-      '%d package%s successfully situated' % (pkgs, 's' if pkgs != 1 else ''))
+      '%d package%s successfully %s' % (
+          pkgs,
+          's' if pkgs != 1 else '',
+          get_verb()))
   return complete
+
+
+def get_verb(tense='perfect'):
+  if tense == 'perfect':
+    if args.clean:
+      return 'cleaned'
+    return 'situated'
+  elif tense == 'progressive':
+    if args.clean:
+      return 'cleaning'
+    return 'situating'
+
 
 def main():
   Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
@@ -484,7 +568,7 @@ def main():
     Log.fail('please report this error message:')
     raise
 
-  Log.info('situating dotfiles')
+  Log.info('%s dotfiles...' % get_verb('progressive'))
   try:
     perform_operations(operations)
   except ErrorAmalgam as e:
