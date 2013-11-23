@@ -8,7 +8,6 @@ import argparse
 import errno
 import json
 import os
-import platform
 import subprocess
 import sys
 
@@ -97,6 +96,28 @@ class bcolors:
     self.ENDC = ''
 
 
+class PlatformComputer:
+  @staticmethod
+  def is_compatible_platform(platform_to_check):
+    if platform_to_check == 'win32' or platform_to_check == 'win64':
+      if platform_to_check == 'win64':
+        Log.warning('using unsupported platform keyword win64')
+      return platform_to_check == sys.platform
+    elif platform_to_check == 'windows' or platform_to_check == 'win':
+      return sys.platform.startswith('win')
+    elif platform_to_check == 'unix':
+      # ...good enough?
+      invalid_prefixes = ['os2', 'win', 'risc', 'generic', 'unknown']
+      for prefix in invalid_prefixes:
+        if sys.platform.startswith(prefix):
+          return False
+      return True
+    elif platform_to_check == 'linux':
+      return sys.platform.startswith('linux')
+    else:
+      return platform_to_check == sys.platform
+
+
 class Operation:
   def process(self):
     raise NotImplementedError("process() must be overridden")
@@ -104,8 +125,6 @@ class Operation:
 
 class OperationSets:
   Unix = {
-      #'symlink': 'ln -s "%s" "%s"',
-      #'symlink': lambda x, y: Log.info("x: %s, y: %s" % (str(x), str(y))),
       'symlink': lambda x, y: os.symlink(x, y),
       'copy': 'cp "%s" "%s"',
       'delete': lambda x, y: OperationSets.shared_delete(y),
@@ -118,8 +137,9 @@ class OperationSets:
 
   @staticmethod
   def get_op_set():
-    if platform.system() == 'Windows':
+    if sys.platform.startswith('win'):
       return OperationSets.Windows
+    # This is probably okay as a default... right? Right?
     return OperationSets.Unix
 
   @staticmethod
@@ -137,7 +157,7 @@ class OperationSets:
 
   @staticmethod
   def is_windows_symlink(target):
-    if platform.system() == 'Windows':
+    if sys.platform.startswith('win'):
       command = 'fsutil reparsepoint query "%s"'
       try:
         output = subprocess.check_output(command % target)
@@ -298,24 +318,54 @@ class Log:
 
 def process_package_file(package_name, package_file):
   from_attr = ''
-  to_attr=''
+  to_attr = ''
+  platform_attr = []
   try:
     # It might be an object...
-    from_attr = package_file["from"]
-    to_attr = package_file["to"]
+    try:
+      from_attr = package_file['from']
+      to_attr = package_file['to']
+    except KeyError:
+      # It might just have a name with other directives too
+      from_attr = package_file['name']
+      to_attr = package_file['name']
+    # At this point, we know it's a string if we've thrown the TypeError again.
+    try:
+      platform_attr = [package_file['platform']]
+    except KeyError:
+      try:
+        # It could also be a list; make it a set if so.
+        platform_attr = frozenset(package_file['platforms'])
+      except KeyError:
+        # We don't care.
+        pass
   except TypeError:
     # Nah, just a string I guess
     from_attr = package_file
     to_attr = package_file
-  operation = 'symlink'
-  if args.clean:
-    operation = 'delete'
-  Log.verbose("operation: %s [%s -> %s]" % (operation, from_attr, to_attr))
-  return FileOperation(package_name, operation, from_attr, to_attr)
+
+  # Now, do all the processing magic.
+  compatible_platform = True
+  if platform_attr:
+    # Check if any platform is compatible with the desired one(s).
+    compatible_platform = reduce(
+        lambda x, y: x or y,
+        map(PlatformComputer.is_compatible_platform, platform_attr))
+
+  if compatible_platform:
+    operation = 'symlink'
+    if args.clean:
+      operation = 'delete'
+    Log.verbose('operation: %s [%s -> %s]' % (operation, from_attr, to_attr))
+    return FileOperation(package_name, operation, from_attr, to_attr)
+  
+  Log.verbose('skipping file %s' % from_attr)
+  return None
 
 
 def process_package_files(package_name, package_files):
-  return [process_package_file(package_name, each) for each in package_files]
+  return [process_package_file(package_name, each) for each in package_files
+          if each is not None]
 
 
 def process_package(package_name, symmap):
@@ -329,7 +379,8 @@ def process_package(package_name, symmap):
       if 'ops' not in package_ops:
         package_ops['ops'] = []
       file = process_package_file(package_name, package_obj[each])
-      package_ops['ops'].append(file)
+      if file:
+        package_ops['ops'].append(file)
     elif each == 'files':
       if 'ops' not in package_ops:
         package_ops['ops'] = []
@@ -343,6 +394,11 @@ def process_package(package_name, symmap):
           package_ops['depends'].append(package_obj[each])
         else:
           package_ops['depends'] += package_obj[each]
+    elif each == 'platform':
+      # Check the platform and abort if it's not compatible.
+      if not PlatformComputer.is_compatible_platform(package_obj[each]):
+        Log.verbose('skipping incompatible package "%s"' % package_name)
+        return None
     else:
       # Probably should warn that this is not valid, whatever it is.
       Log.warn('unknown directive %s specified in package %s' % (
@@ -390,7 +446,10 @@ def check_dependencies(operations):
   errors = None
   for each in operations:
     try:
-      check_single_dependency(each, operations)
+      if operations[each]:
+        check_single_dependency(each, operations)
+      else:
+        Log.verbose('dependencies irrelevant for skipped package %s' % each)
     except Exception as e:
       if args.backtrace:
         raise
@@ -479,7 +538,10 @@ def perform_operations(operations):
 
   for each in operations:
     try:
-      complete = perform_single_operation(each, operations, complete)
+      if operations[each]:
+        complete = perform_single_operation(each, operations, complete)
+      else:
+        Log.verbose('not processing package marked skipped: %s' % each)
     except AlreadyFailedError as e:
       if not errors:
         errors = ErrorAmalgam('some packages failed in processing', e)
@@ -525,7 +587,7 @@ def main():
   Log.info('')
 
   # On Windows, we need to verify first that we are elevated.
-  if platform.system() == 'Windows':
+  if sys.platform.startswith('win'):
     try:
       subprocess.check_call('cmd /q /c at > NUL')
     except subprocess.CalledProcessError:
@@ -558,7 +620,7 @@ def main():
   try:
     check_dependencies(operations)
     numpkgs = len(operations)
-    Log.success('finished checking %d package%s' %
+    Log.success('finished analyzing %d total package%s' %
         (numpkgs, 's' if numpkgs != 1 else ''))
   except ErrorAmalgam as e:
     Log.fail('giving up; %d errors encountered during analysis' % (
