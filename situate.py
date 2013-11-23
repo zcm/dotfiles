@@ -307,10 +307,11 @@ def process_package_file(package_name, package_file):
     # Nah, just a string I guess
     from_attr = package_file
     to_attr = package_file
-  Log.verbose("operation: symlink [%s -> %s]" % (from_attr, to_attr))
+  operation = 'symlink'
   if args.clean:
-    return FileOperation(package_name, 'delete', from_attr, to_attr)
-  return FileOperation(package_name, 'symlink', from_attr, to_attr)
+    operation = 'delete'
+  Log.verbose("operation: %s [%s -> %s]" % (operation, from_attr, to_attr))
+  return FileOperation(package_name, operation, from_attr, to_attr)
 
 
 def process_package_files(package_name, package_files):
