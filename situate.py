@@ -108,7 +108,7 @@ class OperationSets:
       #'symlink': lambda x, y: Log.info("x: %s, y: %s" % (str(x), str(y))),
       'symlink': lambda x, y: os.symlink(x, y),
       'copy': 'cp "%s" "%s"',
-      'delete': lambda x, y: OperationSets.shared_delete(x),
+      'delete': lambda x, y: OperationSets.shared_delete(y),
   }
   Windows = {
       'symlink': lambda x, y: OperationSets.windows_symlink(x, y),
@@ -148,25 +148,25 @@ class OperationSets:
 
   @staticmethod
   def shared_delete(x):
-    if os.path.isdir(x):
-      if OperationSets.is_windows_symlink(x):
-        try:
-          actual_command = 'rmdir "%s"' % x
-          Log.verbose('Deleting a Windows symlink via: %s' % actual_command)
-          subprocess.check_call(actual_command, shell=True)
-        except WindowsError as e:
-          # This is particularly weird... didn't we just check the file was a
-          # directory? That should return false if there's nothing there...
-          if e.errno == errno.ENOENT:
-            # Intercept the exception and throw one we understand for deletes
-            raise FileVanishedError('File %s was here, but not anymore...' % x)
-          raise e
-      else:
-        # This should happen for non-Windows symlinks and copies.
-        os.rmdir(x)
+    if os.path.isdir(x) and OperationSets.is_windows_symlink(x):
+      try:
+        actual_command = 'rmdir "%s"' % x
+        Log.verbose('Deleting a Windows symlink via: %s' % actual_command)
+        subprocess.check_call(actual_command, shell=True)
+      except WindowsError as e:
+        # This is particularly weird... didn't we just check the file was a
+        # directory? That should return false if there's nothing there...
+        if e.errno == errno.ENOENT:
+          # Intercept the exception and throw one we understand for deletes
+          raise FileVanishedError('File %s was here, but not anymore...' % x)
+        raise e
+    elif os.path.isdir(x) and not os.path.islink(x):
+      Log.verbose("deleting a copied directory: %s" % x)
+      # This should happen only for copies.
+      os.rmdir(x)
     else:
       try:
-        os.remove(x)
+        os.unlink(x)  # This will also delete copied files.
       except OSError as e:
         if e.errno == errno.ENOENT:
           raise AlreadyDeletedError('File %s has already been deleted' % x)
