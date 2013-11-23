@@ -1,0 +1,6 @@
+attrcolor b ".I"
+termcapinfo xterm 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
+defbce "on"
+hardstatus on
+hardstatus alwayslastline
+hardstatus string "%{.Kw}%-w%{.mW}%n %t%{-}%+w %=%{+s ..G} %H %{..C} %m/%d %C%a"
