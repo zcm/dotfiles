@@ -120,7 +120,7 @@ class OperationSets:
   def get_op_set():
     if platform.system() == 'Windows':
       return OperationSets.Windows
-    return OperationsSets.Unix
+    return OperationSets.Unix
 
   @staticmethod
   def windows_symlink(x, y):
