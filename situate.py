@@ -280,6 +280,10 @@ class ErrorAmalgam(Exception):
   def __init__(self, message, first_error):
     Exception.__init__(self, message)
     self.error_list = [ first_error ]
+    self.failed = None  # Use this to track which packages failed
+
+  def __len__(self):
+    return len(self.error_list)
 
 
 class Log:
@@ -465,7 +469,7 @@ def check_dependencies(operations):
 def perform_single_operation(package_name, operations, complete, failed={}):
   # First, check to see if this package is already complete
   if package_name in complete:
-    return complete
+    return (complete, failed)
 
   # If it previously failed, don't retry it.
   if package_name in failed:
@@ -477,15 +481,15 @@ def perform_single_operation(package_name, operations, complete, failed={}):
     try:
       depends = operations[package_name]['depends']
       if isinstance(depends, basestring):
-        complete = perform_single_operation(
+        complete, failed = perform_single_operation(
             depends, operations, complete, failed)
       else:
         for each in depends:
-          complete = perform_single_operation(
+          complete, failed = perform_single_operation(
               each, operations, complete, failed)
-    except Exception:
-      msg = 'not situating package %s because a dependent package failed' % (
-          package_name)
+    except Exception:  # TODO(dremelofdeath): Maybe not catch everything here?
+      msg = 'not %s package %s because a dependent package failed' % (
+          get_verb('progressive'), package_name)
       Log.fail(msg)
       failed[package_name] = True
       raise
@@ -503,7 +507,8 @@ def perform_single_operation(package_name, operations, complete, failed={}):
         if args.backtrace:
           raise
         if not errors:
-          message = 'errors while situating package %s' % (package_name)
+          message = 'errors while %s package %s' % (
+              get_verb('progressive'), package_name)
           errors = ErrorAmalgam(message, e)
         else:
           errors.error_list.append(e)
@@ -513,35 +518,44 @@ def perform_single_operation(package_name, operations, complete, failed={}):
     # We should probably warn about this.
     Log.warn('no operations defined for package %s' % (package_name))
   except OperationError as e:
+    # TODO(dremelofdeath): I'm not actually sure this codepath is ever hit.
     if args.backtrace:
       raise
-    errors = ErrorAmalgam('errors while checking dependencies', e)
+    message = 'errors while %s package %s' % (
+        get_verb('progressive'), package_name)
+    errors = ErrorAmalgam(message, e)
 
   if errors:
     num_err = len(errors.error_list)
-    Log.fail('situating package %s failed with %d error%s' %
-        (package_name, num_err, 's' if num_err != 1 else ''))
+    Log.fail('%s package %s failed with %d error%s' %
+        (get_verb('progressive'), package_name, num_err,
+         's' if num_err != 1 else ''))
     failed[package_name] = True
+    errors.failed = failed
     raise errors
 
   # And now mark this operation complete
   complete[package_name] = True
   
   Log.success('package %s successfully %s!' % (package_name, get_verb()))
-  return complete
+  return (complete, failed)
 
 
 def perform_operations(operations):
   complete = {}
+  skipped = {}
+  failed = {}
 
   errors = None
 
-  for each in operations:
+  for package_name in operations:
     try:
-      if operations[each]:
-        complete = perform_single_operation(each, operations, complete)
+      if operations[package_name]:
+        complete, failed = perform_single_operation(
+            package_name, operations, complete, failed)
       else:
-        Log.verbose('not processing package marked skipped: %s' % each)
+        Log.verbose('not processing package marked skipped: %s' % package_name)
+        skipped[package_name] = True
     except AlreadyFailedError as e:
       if not errors:
         errors = ErrorAmalgam('some packages failed in processing', e)
@@ -557,17 +571,18 @@ def perform_operations(operations):
         errors.error_list.append(e)
       Log.fail(e.message)
       Log.info('a package failed, attempting to continue...')
+    except ErrorAmalgam as e:
+      if args.backtrace:
+        raise
+      if not errors:
+        # amalgamception
+        errors = ErrorAmalgam('some packages failed in processing', e)
+        errors.failed = e.failed
+      else:
+        errors.error_list.append(e)
+        errors.failed.update(e.failed)
 
-  if errors:
-    raise errors
-
-  pkgs = len(complete)
-  Log.success(
-      '%d package%s successfully %s' % (
-          pkgs,
-          's' if pkgs != 1 else '',
-          get_verb()))
-  return complete
+  return (complete, skipped, failed, errors)
 
 
 def get_verb(tense='perfect'):
@@ -581,12 +596,7 @@ def get_verb(tense='perfect'):
     return 'situating'
 
 
-def main():
-  Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
-  Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
-  Log.info('')
-
-  # On Windows, we need to verify first that we are elevated.
+def check_windows_elevation():
   if sys.platform.startswith('win'):
     try:
       subprocess.check_call('cmd /q /c at > NUL')
@@ -594,6 +604,50 @@ def main():
       Log.fail('You must run this script from an elevated command prompt.')
       Log.fail('Right-click cmd.exe and choose "Run as administrator".')
       sys.exit(1)
+
+
+def print_completion_message(complete, skipped, failed, errors):
+  if failed:
+    if errors:
+      if (len(failed) != len(errors)):
+        Log.warn("Failed/error mismatch. This is a bug, please report it.")
+        if args.backtrace:
+          raise errors
+      numpkgs = len(errors)
+      Log.fail(
+          '%d package%s had errors' % (numpkgs, 's' if numpkgs != 1 else ''))
+    else:
+      Log.warn(
+          "Errors object was missing in the failed completion handler."
+          " This is a bug. Please report it.")
+      # Try our best anyway to explain WTF just happened.
+      numpkgs = len(failed)
+      Log.fail(
+          '%d package%s had errors' % (numpkgs, 's' if numpkgs != 1 else ''))
+    return None
+  elif errors:
+    Log.warn(
+      "There were %d errors, but no packages failed."
+      " This is probably a bug." % len(errors))
+  else:
+    pkgs = len(complete)
+    Log.success(
+        '%d package%s successfully %s%s' % (
+            pkgs,
+            's' if pkgs != 1 else '',
+            get_verb(),
+            ' (%s skipped)' % len(skipped) if skipped else ''))
+
+  Log.success('everything is OK!')
+
+
+def main():
+  Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
+  Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
+  Log.info('')
+
+  # On Windows, we need to verify first that we are elevated.
+  check_windows_elevation()
 
   Log.info('finding the symbol map')
   symmap_path = os.path.join(args.script_path, args.symmap)
@@ -633,18 +687,12 @@ def main():
 
   Log.info('%s dotfiles...' % get_verb('progressive'))
   try:
-    perform_operations(operations)
-  except ErrorAmalgam as e:
-    numpkgs = len(e.error_list)
-    Log.fail('%d package%s had errors' % (numpkgs, 's' if numpkgs != 1 else ''))
-    return None
+    complete, skipped, failed, errors = perform_operations(operations)
+    print_completion_message(complete, skipped, failed, errors)
   except Exception as e:
     Log.fail('an unexpected error occurred (this might be a bug)')
     Log.fail('please report this error message:')
     raise
-
-  Log.success('everything is OK!')
-  return True
 
 if __name__ == '__main__':
   main()
