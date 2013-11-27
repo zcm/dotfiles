@@ -5,11 +5,14 @@
 # Your right to steal this is reserved. <3
 
 import argparse
+import base64
 import errno
 import json
 import os
 import subprocess
 import sys
+
+from collections import namedtuple
 
 
 parser = argparse.ArgumentParser(
@@ -75,6 +78,12 @@ parser.add_argument('--target_path',
     default = os.getcwd(),
 )
 
+parser.add_argument('--situation_file',
+    type = str,
+    help = 'internal: filename of the situation file',
+    default = '.situation',
+)
+
 args = parser.parse_args()
 
 
@@ -119,7 +128,7 @@ class PlatformComputer:
 
 
 class Operation:
-  def process(self):
+  def process(self, *unused_args, **unused_kwargs):
     raise NotImplementedError("process() must be overridden")
 
 
@@ -244,6 +253,15 @@ class FileOperation(Operation):
           raise
 
 
+class MultiFileOperation(Operation):
+  def __init__(self, *operations):
+    self.operations = operations
+
+  def process(self, from_path, to_path):
+    for each in self.operations:
+      each.process(from_path, to_path)
+
+
 class AnalysisError(Exception):
   pass
 
@@ -320,7 +338,55 @@ class Log:
     Log.message(" OK ", bcolors.OKGREEN, text)
 
 
-def process_package_file(package_name, package_file):
+class SituationFile:
+  def __init__(self, symmap={}, complete={}, skipped={}, failed={},
+               filename=None):
+    self.last_symmap = symmap
+    self.complete = complete
+    self.skipped = skipped
+    self.failed = failed
+    if filename is not None:
+      self.read(filename)
+
+  def read(self, filename):
+    with open(os.path.join(args.target_path, args.situation_file), 'r') as f:
+      situation_json = json.load(f)
+      self.last_symmap = json.loads(
+          base64.b64decode(situation_json['last_symmap']))
+      self.complete = situation_json['complete']
+      self.skipped = situation_json['skipped']
+      self.failed = situation_json['failed']
+
+  def write(self, filename=None):
+    if not filename:
+      filename = os.path.join(args.target_path, args.situation_file)
+    with open(filename, 'w') as f:
+      situation_json = {
+          'last_symmap': base64.b64encode(json.dumps(self.last_symmap)),
+          'complete': self.complete,
+          'skipped': self.skipped,
+          'failed': self.failed,
+      }
+      json.dump(situation_json, f)
+
+  def get_retryable_packages(self):
+    return self.failed
+
+  def get_new_differences(self, new_symmap):
+    new_key_set = set(new_symmap.keys())
+    last_key_set = set(self.last_symmap.keys())
+    intersection = new_key_set.intersection(last_key_set)
+    new_packages = new_key_set - intersection
+    removed_packages = last_key_set - intersection
+    changed_packages = set(pkg for pkg in intersection
+                           if new_symmap[pkg] != self.last_symmap[pkg])
+    return (new_packages, removed_packages, changed_packages)
+
+
+PackageInfo = namedtuple('PackageInfo', ['new', 'removed', 'changed'])
+
+
+def process_package_file(package_name, package_file, package_info=None):
   from_attr = ''
   to_attr = ''
   platform_attr = []
@@ -360,6 +426,17 @@ def process_package_file(package_name, package_file):
     operation = 'symlink'
     if args.clean:
       operation = 'delete'
+    elif package_info:
+      if package_name in package_info.removed:
+        operation = 'delete'
+      elif package_name in package_info.changed:
+        Log.verbose('operation: %s [%s -> %s]' % (
+          'delete, symlink', from_attr, to_attr))
+        # TODO(dremelofdeath): Think about per-file changes only?
+        # Just clear out the package and relink it.
+        return MultiFileOperation(
+            FileOperation(package_name, 'delete', from_attr, to_attr),
+            FileOperation(package_name, 'symlink', from_attr, to_attr))
     Log.verbose('operation: %s [%s -> %s]' % (operation, from_attr, to_attr))
     return FileOperation(package_name, operation, from_attr, to_attr)
   
@@ -367,28 +444,36 @@ def process_package_file(package_name, package_file):
   return None
 
 
-def process_package_files(package_name, package_files):
-  return [process_package_file(package_name, each) for each in package_files
-          if each is not None]
+def process_package_files(package_name, package_files, package_info=None):
+  return [process_package_file(package_name, each, package_info)
+          for each in package_files if each is not None]
 
 
-def process_package(package_name, symmap):
+def process_package(package_name, symmap, package_info=None):
+  # Check first to see if we have to touch this package at all.
+  if package_info:
+    if package_name not in reduce(lambda x, y: x.union(y), package_info):
+      # This package is unchanged.
+      # TODO(dremelofdeath): Make these Nones reason codes.
+      return None
+
   package_obj = symmap[package_name]
 
   package_ops = {}
 
   for each in package_obj:
-    # Try to figure out what kind of statement we have
+    # Try to figure out what kind of statement we have.
     if each == 'file':
       if 'ops' not in package_ops:
         package_ops['ops'] = []
-      file = process_package_file(package_name, package_obj[each])
+      file = process_package_file(package_name, package_obj[each], package_info)
       if file:
         package_ops['ops'].append(file)
     elif each == 'files':
       if 'ops' not in package_ops:
         package_ops['ops'] = []
-      files = process_package_files(package_name, package_obj[each])
+      files = process_package_files(
+          package_name, package_obj[each], package_info)
       package_ops['ops'] += files
     elif each == 'depends':
       if package_obj[each]:
@@ -631,12 +716,15 @@ def print_completion_message(complete, skipped, failed, errors):
       " This is probably a bug." % len(errors))
   else:
     pkgs = len(complete)
-    Log.success(
-        '%d package%s successfully %s%s' % (
-            pkgs,
-            's' if pkgs != 1 else '',
-            get_verb(),
-            ' (%s skipped)' % len(skipped) if skipped else ''))
+    if pkgs:
+      Log.success(
+          '%d package%s successfully %s%s' % (
+              pkgs,
+              's' if pkgs != 1 else '',
+              get_verb(),
+              ' (%s skipped)' % len(skipped) if skipped else ''))
+    else:
+      Log.success('nothing to do!')
 
   Log.success('everything is OK!')
 
@@ -646,10 +734,12 @@ def main():
   Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
   Log.info('')
 
-  # On Windows, we need to verify first that we are elevated.
+  # On Windows, we need to verify first that we are elevated because symlinks
+  # can't be created without administrator privileges.
   check_windows_elevation()
 
   Log.info('finding the symbol map')
+  symmap = None
   symmap_path = os.path.join(args.script_path, args.symmap)
   try:
     symmap = json.load(open(symmap_path))
@@ -664,11 +754,40 @@ def main():
       raise
     return None
   except Exception as e:
+    Log.fail('whatever is about to happen is a bug. report it!')
     Log.fail(e.message)
     raise
 
+  if not symmap:
+    Log.fail('symmap was never assigned! this is a bug, report this!')
+    sys.exit(1)
+
   Log.success('completed reading the symbol map')
-  operations = {pkg: process_package(pkg, symmap) for pkg in symmap}
+
+  situation_file = None
+  try:
+    situation_file = SituationFile(filename=args.situation_file)
+  except IOError as e:
+    if e.errno == errno.ENOENT:
+      Log.verbose('no situation file found. first run scenario?')
+    else:
+      Log.fail('unexpected I/O error -- possibly a bug. details:')
+      raise
+  except Exception:
+    Log.fail(
+      'unexpected error while reading the situation file. please report this!')
+    raise
+
+  package_info = None
+  if situation_file and not args.clean:
+    package_info = PackageInfo._make(
+      situation_file.get_new_differences(symmap))
+    Log.verbose(
+        'read this package_info from the %s file:' % args.situation_file)
+    Log.verbose(str(package_info))
+
+  operations = {pkg: process_package(pkg, symmap, package_info)
+                for pkg in symmap}
 
   Log.info('analyzing...')
   try:
@@ -688,6 +807,22 @@ def main():
   Log.info('%s dotfiles...' % get_verb('progressive'))
   try:
     complete, skipped, failed, errors = perform_operations(operations)
+
+    if not args.clean:
+      if len(complete) or len(failed) or not situation_file:
+        Log.info('writing your %s file' % args.situation_file)
+        SituationFile(symmap, complete, skipped, failed).write()
+    elif situation_file:
+      Log.info('cleaning up your %s file' % args.situation_file)
+      try:
+        os.unlink(os.path.join(args.target_path, args.situation_file))
+      except OSError as e:
+        if e.errno == errno.ENOENT:
+          Log.warn("strange... you had a %s file, but now it's gone" % (
+              args.situation_file))
+        else:
+          raise
+
     print_completion_message(complete, skipped, failed, errors)
   except Exception as e:
     Log.fail('an unexpected error occurred (this might be a bug)')
