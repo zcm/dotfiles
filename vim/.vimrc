@@ -973,6 +973,9 @@ if has("autocmd")
 
   au QuickFixCmdPost,BufWinEnter,BufWinLeave * if &buftype == 'quickfix' | setlocal nonumber | endif
 
+  " Jump to the last position in the file after opening it -- see :help last-position-jump
+  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+
   if GOOGLE_CORP_SPECIFIC
     if !PLAN_TO_USE_YCM_OMNIFUNC && exists('*GtagOmniCompletion')
       aug ZCM_GoogleGtagsOmniCompletion
