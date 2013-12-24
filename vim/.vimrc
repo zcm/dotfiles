@@ -516,6 +516,9 @@ omap <silent> iB :<C-U>normal viB<CR>
 
 hi! link TagListFileName VisualNOS
 
+hi! link haxeInterpolated SpecialChar
+hi! link haxeInterpolatedIdent SpecialChar
+
 "hi Pmenu ctermfg=7 ctermbg=5
 "hi PmenuSel ctermfg=5 ctermbg=6
 
@@ -735,6 +738,7 @@ endif
 
 call ZackBundle('tpope/vim-scriptease')
 call ZackBundle('tpope/vim-dispatch')
+call ZackBundle('tpope/vim-fugitive', 'force_ipi')
 
 if has("python")
   call ZackBundle('Valloric/MatchTagAlways')
@@ -744,6 +748,8 @@ let g:syntastic_check_on_open=1
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
+  call ZackBundle('jdonaldson/vaxe')
+  "call ZackBundle('dremelofdeath/vaxe')
   call ZackBundle('jeroenbourgois/vim-actionscript')
 endif
 
@@ -1021,6 +1027,9 @@ set sw=2
 " always show the status line
 set ls=2
 set stl=%<%f\ #%{changenr()}
+if exists('*fugitive#statusline()')
+  set stl+=\ %{fugitive#statusline()}
+endif
 if exists('*SyntasticStatuslineFlag')
   set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
 endif
