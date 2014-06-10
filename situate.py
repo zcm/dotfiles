@@ -308,12 +308,12 @@ class Log:
   @staticmethod
   def message(type, colorlevel, text):
     if not args.silent:
-      print '[ %s%s%s ]: %s' % (
+      print('[ %s%s%s ]: %s' % (
           colorlevel,
           type,
           bcolors.ENDC,
           text
-      )
+      ))
 
   @staticmethod
   def verbose(text):
