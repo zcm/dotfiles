@@ -786,8 +786,8 @@ def main():
         'read this package_info from the %s file:' % args.situation_file)
     Log.verbose(str(package_info))
 
-  operations = {pkg: process_package(pkg, symmap, package_info)
-                for pkg in symmap}
+  operations = dict((pkg, process_package(pkg, symmap, package_info))
+                    for pkg in symmap)
 
   Log.info('analyzing...')
   try:
