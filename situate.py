@@ -527,8 +527,10 @@ def check_single_dependency(package_name, operations, dep_stack=[]):
         package_name,
         "->".join(chain_from_stack(dep_stack)),
     )
-    # TODO(dremelofdeath): Consider using raise...from in Python 3.x later.
-    raise NonexistentDependencyError(message), None, sys.exc_info()[2]
+    if sys.version_info[0] >= 3:
+      eval('raise NonexistentDependencyError(message) from sys.exc_info()[1]')
+    else:
+      eval('raise NonexistentDependencyError(message), None, sys.exc_info()[2]')
 
 
 def check_dependencies(operations):
