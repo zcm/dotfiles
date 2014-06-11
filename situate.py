@@ -126,6 +126,12 @@ class PlatformComputer:
     else:
       return platform_to_check == sys.platform
 
+  @staticmethod
+  def should_disable_color():
+    if sys.platform.startswith('win') and sys.version_info[0] >= 3:
+      return True
+    return False
+
 
 class Operation:
   def process(self, *unused_args, **unused_kwargs):
@@ -732,6 +738,12 @@ def print_completion_message(complete, skipped, failed, errors):
 
 
 def main():
+  # Before doing anything else, check if we need to disable color printouts.
+  colors_disabled = PlatformComputer.should_disable_color()
+
+  if colors_disabled:
+    bcolors.disable()
+
   Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
   Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
   Log.info('')
