@@ -96,13 +96,14 @@ class bcolors:
   VERBOSE = '\033[90m'
   ENDC = '\033[0m'
 
-  def disable(self):
-    self.HEADER = ''
-    self.OKBLUE = ''
-    self.OKGREEN = ''
-    self.WARNING = ''
-    self.FAIL = ''
-    self.ENDC = ''
+  @classmethod
+  def disable(cls):
+    cls.HEADER = ''
+    cls.OKBLUE = ''
+    cls.OKGREEN = ''
+    cls.WARNING = ''
+    cls.FAIL = ''
+    cls.ENDC = ''
 
 
 class PlatformComputer:
