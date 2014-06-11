@@ -369,7 +369,8 @@ class SituationFile:
       filename = os.path.join(args.target_path, args.situation_file)
     with open(filename, 'w') as f:
       situation_json = {
-          'last_symmap': base64.b64encode(json.dumps(self.last_symmap)),
+          'last_symmap':
+              base64.b64encode(json.dumps(self.last_symmap).encode('ascii')),
           'complete': self.complete,
           'skipped': self.skipped,
           'failed': self.failed,
