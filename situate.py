@@ -129,7 +129,7 @@ class PlatformComputer:
 
   @staticmethod
   def should_disable_color():
-    if sys.platform.startswith('win') and sys.version_info[0] >= 3:
+    if sys.platform.startswith('win'):
       return True
     return False
 
