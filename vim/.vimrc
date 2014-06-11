@@ -679,6 +679,11 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
   endif
+  " This is a per-machine override. Touch the file this looks for to force disable YCM.
+  if filereadable($HOME . "/.vimrc_disable_ycm")
+    let g:zcm_you_can_complete_me = 0
+    return g:zcm_you_can_complete_me
+  endif
   let l:right_version = (version >= 703 && has('patch584')) || version > 703
   let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
   let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
