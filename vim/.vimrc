@@ -886,8 +886,17 @@ if has("gui_running")
     " au zcm_windows_maximize GUIEnter * simalt ~x
     " aug END
 
-    " and start from our My Documents (or other home) directory
-    cd ~
+    " and start from our My Documents (or other home) directory if starting
+    " without a filename (i.e., a new instance with a blank buffer)
+    function ChangeToHomeIfNewInstance()
+      if @% == ""
+        cd ~
+      endif
+    endfunction
+
+    aug ZCM_Windows_StartFreshFromHomeDirectory
+    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter * call ChangeToHomeIfNewInstance()
+    aug END
 
     " set a font? (I'm cool with not doing this right now in Windows.)
     " set gfn=Lucida_Console:h10:cANSI
