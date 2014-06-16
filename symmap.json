@@ -9,5 +9,12 @@
   "screen": {
     "platform": "unix",
     "file": ".screenrc"
+  },
+  "ConEmu": {
+    "platform": "windows",
+    "file": {
+      "from": "ConEmu.xml",
+      "to": "AppData\\Roaming\\ConEmu.xml"
+    }
   }
 }
