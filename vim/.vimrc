@@ -16,8 +16,12 @@ if has("persistent_undo")
   set undolevels=10000
 endif
 
-if has("gui_macvim")
-  sil! set gfn=ProggySquare:h11
+if has("gui_running")
+  if has("gui_macvim")
+    sil! set gfn=ProggySquare:h11
+  elseif has("gui_gtk")
+    sil! set gfn=ProggySquareTT\ 12
+  endif
 endif
 
 if !has("win32") && match($TERM, "screen") != -1
@@ -46,7 +50,8 @@ if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
 
   " on Mac OS X, toggle hiding the dock
   function MacToggleDockHiding()
-    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1 " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
+    " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
+    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1
         au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
         aug END
       else
