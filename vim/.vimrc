@@ -747,10 +747,12 @@ endif
 let g:syntastic_check_on_open=1
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
-if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
-  call ZackBundle('jdonaldson/vaxe')
-  "call ZackBundle('dremelofdeath/vaxe')
-  call ZackBundle('jeroenbourgois/vim-actionscript')
+if has('python')
+  if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
+    call ZackBundle('jdonaldson/vaxe')
+    "call ZackBundle('dremelofdeath/vaxe')
+    call ZackBundle('jeroenbourgois/vim-actionscript')
+  endif
 endif
 
 "call ZackBundle('tlib')
