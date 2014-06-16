@@ -4,7 +4,7 @@ set showcmd
 " detect if we're in restricted mode before doing anything else
 let RESTRICTED_MODE=0
 try
-  call system("echo ...")
+  sil call system("echo ...")
 catch /^Vim\%((\a\+)\)\=:E145/
   let RESTRICTED_MODE=1
 endtry
@@ -704,8 +704,15 @@ if CheckIfYouCanCompleteMe()
   endif
 else
   " If we're not going to be using YCM, we might as well give NeoComplCache a shot.
-  let g:neocomplcache_enable_at_startup = 1
+  " NOTE: This option is causing the intro message to vanish after starting up.
+  "let g:neocomplcache_enable_at_startup = 1
   call ZackBundle('Shougo/neocomplcache.vim')
+  " So instead of using the default startup, we'll do it ourselves here.
+  if has("autocmd")
+    aug ZCM_Start_NeoComplCache
+    au ZCM_Start_NeoComplCache VimEnter * NeoComplCacheEnable
+    aug END
+  endif
   " <TAB>: completion.
   inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
   inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -895,7 +902,7 @@ if has("gui_running")
     endfunction
 
     aug ZCM_Windows_StartFreshFromHomeDirectory
-    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter * call ChangeToHomeIfNewInstance()
+    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter * sil call ChangeToHomeIfNewInstance()
     aug END
 
     " set a font? (I'm cool with not doing this right now in Windows.)
@@ -982,7 +989,7 @@ if has("autocmd")
   " (but, of course, only for compatible files with an autocommand)
   aug zcm_doxygen
   au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
-  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp sil call EnableDoxygenComments()
   aug END
 
   " Exclude vimrc from undofile overrides since our copy is under source control
