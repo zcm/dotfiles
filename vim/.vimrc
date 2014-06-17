@@ -4,7 +4,7 @@ set showcmd
 " detect if we're in restricted mode before doing anything else
 let RESTRICTED_MODE=0
 try
-  call system("echo ...")
+  sil call system("echo ...")
 catch /^Vim\%((\a\+)\)\=:E145/
   let RESTRICTED_MODE=1
 endtry
@@ -16,8 +16,12 @@ if has("persistent_undo")
   set undolevels=10000
 endif
 
-if has("gui_macvim")
-  sil! set gfn=ProggySquare:h11
+if has("gui_running")
+  if has("gui_macvim")
+    sil! set gfn=ProggySquare:h11
+  elseif has("gui_gtk")
+    sil! set gfn=ProggySquareTT\ 12
+  endif
 endif
 
 if !has("win32") && match($TERM, "screen") != -1
@@ -46,7 +50,8 @@ if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
 
   " on Mac OS X, toggle hiding the dock
   function MacToggleDockHiding()
-    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1 " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
+    " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
+    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1
         au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
         aug END
       else
@@ -679,6 +684,11 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
   endif
+  " This is a per-machine override. Touch the file this looks for to force disable YCM.
+  if filereadable($HOME . "/.vimrc_disable_ycm")
+    let g:zcm_you_can_complete_me = 0
+    return g:zcm_you_can_complete_me
+  endif
   let l:right_version = (version >= 703 && has('patch584')) || version > 703
   let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
   let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
@@ -699,8 +709,15 @@ if CheckIfYouCanCompleteMe()
   endif
 else
   " If we're not going to be using YCM, we might as well give NeoComplCache a shot.
-  let g:neocomplcache_enable_at_startup = 1
+  " NOTE: This option is causing the intro message to vanish after starting up.
+  "let g:neocomplcache_enable_at_startup = 1
   call ZackBundle('Shougo/neocomplcache.vim')
+  " So instead of using the default startup, we'll do it ourselves here.
+  if has("autocmd")
+    aug ZCM_Start_NeoComplCache
+    au ZCM_Start_NeoComplCache VimEnter * NeoComplCacheEnable
+    aug END
+  endif
   " <TAB>: completion.
   inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
   inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -881,8 +898,17 @@ if has("gui_running")
     " au zcm_windows_maximize GUIEnter * simalt ~x
     " aug END
 
-    " and start from our My Documents (or other home) directory
-    cd ~
+    " and start from our My Documents (or other home) directory if starting
+    " without a filename (i.e., a new instance with a blank buffer)
+    function ChangeToHomeIfNewInstance()
+      if @% == ""
+        cd ~
+      endif
+    endfunction
+
+    aug ZCM_Windows_StartFreshFromHomeDirectory
+    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter * sil call ChangeToHomeIfNewInstance()
+    aug END
 
     " set a font? (I'm cool with not doing this right now in Windows.)
     " set gfn=Lucida_Console:h10:cANSI
@@ -968,7 +994,7 @@ if has("autocmd")
   " (but, of course, only for compatible files with an autocommand)
   aug zcm_doxygen
   au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
-  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp call EnableDoxygenComments()
+  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp sil call EnableDoxygenComments()
   aug END
 
   " Exclude vimrc from undofile overrides since our copy is under source control

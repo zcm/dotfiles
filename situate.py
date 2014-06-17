@@ -96,13 +96,14 @@ class bcolors:
   VERBOSE = '\033[90m'
   ENDC = '\033[0m'
 
-  def disable(self):
-    self.HEADER = ''
-    self.OKBLUE = ''
-    self.OKGREEN = ''
-    self.WARNING = ''
-    self.FAIL = ''
-    self.ENDC = ''
+  @classmethod
+  def disable(cls):
+    cls.HEADER = ''
+    cls.OKBLUE = ''
+    cls.OKGREEN = ''
+    cls.WARNING = ''
+    cls.FAIL = ''
+    cls.ENDC = ''
 
 
 class PlatformComputer:
@@ -125,6 +126,12 @@ class PlatformComputer:
       return sys.platform.startswith('linux')
     else:
       return platform_to_check == sys.platform
+
+  @staticmethod
+  def should_disable_color():
+    if sys.platform.startswith('win'):
+      return True
+    return False
 
 
 class Operation:
@@ -308,12 +315,12 @@ class Log:
   @staticmethod
   def message(type, colorlevel, text):
     if not args.silent:
-      print '[ %s%s%s ]: %s' % (
+      print('[ %s%s%s ]: %s' % (
           colorlevel,
           type,
           bcolors.ENDC,
           text
-      )
+      ))
 
   @staticmethod
   def verbose(text):
@@ -362,7 +369,8 @@ class SituationFile:
       filename = os.path.join(args.target_path, args.situation_file)
     with open(filename, 'w') as f:
       situation_json = {
-          'last_symmap': base64.b64encode(json.dumps(self.last_symmap)),
+          'last_symmap':
+              base64.b64encode(json.dumps(self.last_symmap).encode('ascii')),
           'complete': self.complete,
           'skipped': self.skipped,
           'failed': self.failed,
@@ -527,8 +535,10 @@ def check_single_dependency(package_name, operations, dep_stack=[]):
         package_name,
         "->".join(chain_from_stack(dep_stack)),
     )
-    # TODO(dremelofdeath): Consider using raise...from in Python 3.x later.
-    raise NonexistentDependencyError(message), None, sys.exc_info()[2]
+    if sys.version_info[0] >= 3:
+      eval('raise NonexistentDependencyError(message) from sys.exc_info()[1]')
+    else:
+      eval('raise NonexistentDependencyError(message), None, sys.exc_info()[2]')
 
 
 def check_dependencies(operations):
@@ -730,6 +740,12 @@ def print_completion_message(complete, skipped, failed, errors):
 
 
 def main():
+  # Before doing anything else, check if we need to disable color printouts.
+  colors_disabled = PlatformComputer.should_disable_color()
+
+  if colors_disabled:
+    bcolors.disable()
+
   Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
   Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
   Log.info('')
@@ -786,8 +802,8 @@ def main():
         'read this package_info from the %s file:' % args.situation_file)
     Log.verbose(str(package_info))
 
-  operations = {pkg: process_package(pkg, symmap, package_info)
-                for pkg in symmap}
+  operations = dict((pkg, process_package(pkg, symmap, package_info))
+                    for pkg in symmap)
 
   Log.info('analyzing...')
   try:
