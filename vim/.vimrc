@@ -544,10 +544,10 @@ call pathogen#infect()
 call ipi#inspect()
 
 " Time to kickstart Vundle using IPI... god what a hack
-IP vundle
+IP Vundle.vim
 
 filetype off " do NOT start vundle with this on!
-call vundle#rc("$HOME/vimfiles/ipi")
+call vundle#begin("$HOME/vimfiles/ipi")
 
 function IsBundleInstalled(bundle_name)
   return IsBundleInstalledWithAutoload(a:bundle_name, a:bundle_name)
@@ -822,6 +822,7 @@ endif
 
 " End bundle section
 
+call vundle#end()
 filetype plugin indent on
 
 " Color and window settings section
