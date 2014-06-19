@@ -31,8 +31,10 @@ else
   let g:using_gnu_screen = 0
 endif
 
-" Override vim's terminal detection for GNOME Terminal (when not still running in a GNU screen).
-if !has("gui_running") && has("unix") && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
+" Override vim's terminal detection for GNOME Terminal (when not still running
+" in a GNU screen).
+if !has("gui_running") && has("unix")
+      \ && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
   set t_Co=256
 endif
 
@@ -632,7 +634,7 @@ function ZackBundle(...) abort
     endif
     if load_method == 'normal' || s:processing_queued_bundles
       let l:rtp_save = &rtp
-      Bundle bundle_target
+      Plugin bundle_target
       let l:bundle_rtp = &rtp
       let &rtp = l:rtp_save
     endif
@@ -675,26 +677,34 @@ endfunction
 " Vundle bundles go here (and other packages too, say, Glug/Pathogen)
 
 " absolutely completely required
-Bundle 'gmarik/vundle'
+Plugin 'gmarik/vundle'
 
 " other bundles...
-" YCM should probably come last... YOUCOMPLETEME IS HARD OKAY (okay, so maybe first...)
-" yes there is a section for YCM all to itself
+
+" YCM comes first. It's complicated and other plugins check if it's loaded.
+" And yes, there is a section for YCM all to itself.
 function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
   endif
-  " This is a per-machine override. Touch the file this looks for to force disable YCM.
+  " This is a per-machine override.
+  " Touch the file this looks for to force disable YCM.
   if filereadable($HOME . "/.vimrc_disable_ycm")
     let g:zcm_you_can_complete_me = 0
     return g:zcm_you_can_complete_me
   endif
   let l:right_version = (version >= 703 && has('patch584')) || version > 703
-  let l:windows_possible = has('win32') || has('win64')  " On windows you have to build this yourself, bitch
-  let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/libclang.dll")
-  let l:windows_possible = l:windows_possible && filereadable($HOME . "/vimfiles/ipi/YouCompleteMe/python/ycm_core.pyd")
-  " screw mac for now... it takes WAY too much work to get YCM working on non-Linux things...
-  let g:zcm_you_can_complete_me = l:right_version && !has('macunix') && (l:windows_possible || has('unix'))
+  " On windows you have to build this yourself, bitch
+  let l:base_ycm_python = $HOME . "/vimfiles/ipi/YouCompleteMe/python/"
+  let l:windows_ok = has('win32') || has('win64')
+  let l:windows_ok = l:windows_ok
+      \ && filereadable(l:base_ycm_python . "libclang.dll")
+  let l:windows_ok = l:windows_ok
+      \ && filereadable(l:base_ycm_python . "ycm_core.pyd")
+  " screw mac for now...
+  " it takes WAY too much work to get YCM working on non-Linux things...
+  let g:zcm_you_can_complete_me =
+      \ l:right_version && !has('macunix') && (l:windows_ok || has('unix'))
   return g:zcm_you_can_complete_me
 endfunction
 
@@ -708,7 +718,7 @@ if CheckIfYouCanCompleteMe()
     call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
   endif
 else
-  " If we're not going to be using YCM, we might as well give NeoComplCache a shot.
+  " If we're not using YCM, we might as well give NeoComplCache a shot.
   " NOTE: This option is causing the intro message to vanish after starting up.
   "let g:neocomplcache_enable_at_startup = 1
   call ZackBundle('Shougo/neocomplcache.vim')
@@ -718,7 +728,7 @@ else
     au ZCM_Start_NeoComplCache VimEnter * NeoComplCacheEnable
     aug END
   endif
-  " <TAB>: completion.
+  " <TAB> completion.
   inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
   inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
 endif
@@ -799,7 +809,8 @@ if GOOGLE_CORP_SPECIFIC && GOOGLE_HAS_GOOGLE_VIM
   let g:syntastic_gcl_checkers = ['gcl']
   let g:syntastic_python_checkers = ['pyflakes']
 
-  let g:blazevim_execution = 'foreground' " until background is fixed...
+  " until background is fixed...
+  let g:blazevim_execution = 'foreground'
 
   " Blaze hotkeys
   " Load errors from blaze
@@ -827,13 +838,21 @@ filetype plugin indent on
 
 " Color and window settings section
 if !RESTRICTED_MODE
+  function GetColorschemeFile(...) abort
+    if len(a:000) == 1
+      return $HOME . "/vimfiles/colors/" . a:1
+    elseif len(a:000) == 2
+      return $HOME . "/vimfiles/ipi/" . a:1 . "/colors/" . a:2
+    endif
+  endfunction
+
   colo elflord " default for if we set nothing else ever
   if !(has("win32") || has("win64")) || has("gui_running")
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
-    if filereadable($HOME . "/vimfiles/ipi/vim-vividchalk/colors/vividchalk.vim")
+    if filereadable(GetColorschemeFile("vim-vividchalk", "vividchalk.vim"))
       sil! colo vividchalk " this thing is sweet
     elseif has("gui_running")
-      if filereadable($HOME . "/vimfiles/colors/dante.vim")
+      if filereadable(GetColorschemeFile("dante.vim"))
         sil! colo dante
       else
         colo desert
@@ -849,8 +868,8 @@ endif
 " in the block above this one
 if has("gui_running")
   set guioptions+=c
-  set guioptions-=R " turn off the right scrollbar
-  set guioptions-=L " turn off the left scrollbar
+  set guioptions-=R  " turn off the right scrollbar
+  set guioptions-=L  " turn off the left scrollbar
 
   if has("unix") || has("gui_win32")
     " also, kill win32/unix gvim's toolbar
@@ -908,7 +927,8 @@ if has("gui_running")
     endfunction
 
     aug ZCM_Windows_StartFreshFromHomeDirectory
-    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter * sil call ChangeToHomeIfNewInstance()
+    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter *
+        \ sil call ChangeToHomeIfNewInstance()
     aug END
 
     " set a font? (I'm cool with not doing this right now in Windows.)
@@ -967,52 +987,58 @@ if has("autocmd")
 
   " lisp options
   aug ClojureZCM
-  au ClojureZCM BufNewFile,BufRead *.clj set ft=lisp
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw <
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=catch,def,defn,defonce,doall
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=dorun,doseq,dosync,doto
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=monitor-enter,monitor-exit
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=ns,recur,throw,try,var
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw+=defn-,proxy
-  au ClojureZCM BufNewFile,BufRead *.clj setlocal lw-=do
-  au ClojureZCM BufNewFile,BufRead *.clj set lisp
+  au BufNewFile,BufRead *.clj set ft=lisp
+  au BufNewFile,BufRead *.clj setlocal lw <
+  au BufNewFile,BufRead *.clj setlocal lw+=catch,def,defn,defonce,doall
+  au BufNewFile,BufRead *.clj setlocal lw+=dorun,doseq,dosync,doto
+  au BufNewFile,BufRead *.clj setlocal lw+=monitor-enter,monitor-exit
+  au BufNewFile,BufRead *.clj setlocal lw+=ns,recur,throw,try,var
+  au BufNewFile,BufRead *.clj setlocal lw+=defn-,proxy
+  au BufNewFile,BufRead *.clj setlocal lw-=do
+  au BufNewFile,BufRead *.clj set lisp
   aug END
 
   " folding options
   "set foldcolumn=3
   "set fdn=2
   "aug zcm_folding
-  "au zcm_folding BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
-  "au zcm_folding BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
-  "au zcm_folding BufNewFile,BufRead * silent! %foldo!
-  "au zcm_folding BufNewFile,BufRead * let b:open_all_folds_bfbn=1
-  "au zcm_folding WinEnter __Tag_List__ set foldcolumn=0
-  "au zcm_folding Syntax java* syn region myfold start="{" end="}" transparent fold
-  "au zcm_folding Syntax java* syn sync fromstart
+  "au BufNewFile,BufRead *.py,_vimrc,.vimrc set foldmethod=indent
+  "au BufNewFile,BufRead *.java,*.[ch],*.cpp,*.hpp set foldmethod=syntax
+  "au BufNewFile,BufRead * silent! %foldo!
+  "au BufNewFile,BufRead * let b:open_all_folds_bfbn=1
+  "au WinEnter __Tag_List__ set foldcolumn=0
+  "au Syntax java* syn region myfold start="{" end="}" transparent fold
+  "au Syntax java* syn sync fromstart
   "aug END
 
-  " I just so happen to like Doxygen-style comments, so I'm going activate them by default here
-  " (but, of course, only for compatible files with an autocommand)
+  " I just so happen to like Doxygen-style comments, so I'm going activate them
+  " by default here (but, of course, only for compatible files).
   aug zcm_doxygen
-  au zcm_doxygen BufNewFile,BufRead * let b:zcm_doxified = 0
-  au zcm_doxygen BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp sil call EnableDoxygenComments()
+  au BufNewFile,BufRead * let b:zcm_doxified = 0
+  au BufNewFile,BufRead *.[ch],*.java,*.cpp,*.hpp
+      \ sil call EnableDoxygenComments()
   aug END
 
   " Exclude vimrc from undofile overrides since our copy is under source control
   aug zcm_vimrc_prevent_undofile_override
-  au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
-  au zcm_vimrc_prevent_undofile_override BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
+  au BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
+  au BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
   aug END
 
-  au QuickFixCmdPost,BufWinEnter,BufWinLeave * if &buftype == 'quickfix' | setlocal nonumber | endif
+  au QuickFixCmdPost,BufWinEnter,BufWinLeave *
+      \ if &buftype == 'quickfix' | setlocal nonumber | endif
 
-  " Jump to the last position in the file after opening it -- see :help last-position-jump
-  au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
+  " Jump to the last position in the file after opening it.
+  " See :help last-position-jump for more info.
+  au BufReadPost *
+      \ if line("'\"") > 1 && line("'\"") <= line("$") |
+          \ exe "normal! g`\"" |
+      \ endif
 
   if GOOGLE_CORP_SPECIFIC
     if !PLAN_TO_USE_YCM_OMNIFUNC && exists('*GtagOmniCompletion')
       aug ZCM_GoogleGtagsOmniCompletion
-      au ZCM_GoogleGtagsOmniCompletion BufEnter * set omnifunc=GtagOmniCompletion
+      au BufEnter * set omnifunc=GtagOmniCompletion
       aug END
     endif
     " This might be the slightest bit of a google-specific hack, but I want ,bl
@@ -1020,7 +1046,7 @@ if has("autocmd")
     au FileReadPost * if &buftype == 'nofile' | setlocal nonumber | endif
     " Start a changelist description at a convenient location in piper
     aug ZCM_Google_PiperTmpDescription
-    au ZCM_Google_PiperTmpDescription BufReadPost .pipertmp* execute search("Description:$")+1
+    au BufReadPost .pipertmp* execute search("Description:$")+1
     aug END
   else
     au BufNewFile,BufRead *.java compiler javac
