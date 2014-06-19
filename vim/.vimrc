@@ -677,7 +677,7 @@ endfunction
 " Vundle bundles go here (and other packages too, say, Glug/Pathogen)
 
 " absolutely completely required
-Plugin 'gmarik/vundle'
+Plugin 'gmarik/Vundle.vim'
 
 " other bundles...
 
