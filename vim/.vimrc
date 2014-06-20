@@ -951,6 +951,9 @@ if has("gui_running")
     " If we don't have any idea what is going on or where we are...
       call NotepadWindowSize(1)
   endif
+else
+  " Only override the mouse settings if we're not in the GUI.
+  set mouse=a
 endif
 
 " End color and window settings section
