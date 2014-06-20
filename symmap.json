@@ -16,5 +16,12 @@
       "from": "ConEmu.xml",
       "to": "AppData\\Roaming\\ConEmu.xml"
     }
+  },
+  "bash": {
+    "platform": "unix",
+    "files": [
+      ".bash_profile",
+      ".bashrc"
+    ]
   }
 }
