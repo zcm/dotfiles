@@ -66,3 +66,7 @@ function bm {
     echo "error: invalid option"
   fi
 }
+
+function vimclass {
+  vim $(ack -l "\bclass $1\b")
+}
