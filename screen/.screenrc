@@ -4,3 +4,5 @@ defbce "on"
 hardstatus on
 hardstatus alwayslastline
 hardstatus string "%{.Kw}%-w%{.mW}%n %t%{-}%+w %=%{+s ..G} %H %{..C} %m/%d %C%a"
+
+termcapinfo xterm* ti@:te@
