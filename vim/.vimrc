@@ -796,6 +796,11 @@ if has("python")
 endif
 
 let g:syntastic_check_on_open=1
+if filereadable($HOME . "/vimfiles/bin/checkstyle-5.7-all.jar")
+  let g:syntastic_java_checkers=['checkstyle']
+  let g:syntastic_java_checkstyle_classpath=$HOME . "/vimfiles/bin/checkstyle-5.7-all.jar"
+  let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/zack_checks.xml"
+endif
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
