@@ -70,3 +70,7 @@ function bm {
 function vimclass {
   vim $(ack -l "\bclass $1\b")
 }
+
+function vimack {
+  vim $(ack -l $1)
+}
