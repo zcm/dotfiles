@@ -72,5 +72,5 @@ function vimclass {
 }
 
 function vimack {
-  echo $(ack -l "$1")
+  vim $(ack -l "$1")
 }
