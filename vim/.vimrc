@@ -152,6 +152,9 @@ let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
 
+" this is getting out of hand... this might be nice to move into a 'company detector' module...
+let AGILYSYS_CORP_SPECIFIC=filereadable($HOME . "/.vimrc_agilysys")
+
 function CheckRunningAtGoogle()
   let l:domain_match=0
   if has("unix")
@@ -799,7 +802,11 @@ let g:syntastic_check_on_open=1
 if filereadable($HOME . "/vimfiles/bin/checkstyle-5.7-all.jar")
   let g:syntastic_java_checkers=['checkstyle']
   let g:syntastic_java_checkstyle_classpath=$HOME . "/vimfiles/bin/checkstyle-5.7-all.jar"
-  let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/zack_checks.xml"
+  if AGILYSYS_CORP_SPECIFIC
+    let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/agilysys_checks.xml"
+  else
+    let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/zack_checks.xml"
+  endif
 endif
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
