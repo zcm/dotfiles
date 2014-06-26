@@ -302,6 +302,27 @@ if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
   endif
 endif
 
+if !GOOGLE_CORP_SPECIFIC
+  if has("cscope")
+    set cscopetag
+    set nocsverb
+    if executable("gtags-cscope")
+      " Not to be confused with Google's Gtags, I assure you.
+      set csprg=gtags-cscope
+      if filereadable("GTAGS")
+        cs add GTAGS
+      endif
+    else
+      if filereadable("cscope.out")
+        cs add cscope.out
+      elseif $CSCOPE_DB != ""
+        cs add $CSCOPE_DB
+      endif
+    endif
+    set csverb
+  endif
+endif
+
 if has("dos32") || has("dos16")
   set viminfo+=nC:/VIM72/_viminfo
 endif
