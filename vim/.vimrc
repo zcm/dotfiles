@@ -127,10 +127,13 @@ endfunction
 
 function RecalculatePluginSplitWidth()
   let l:width=0
-  if (&columns / 5 < 30)
-    let l:width=30
+  if (&columns <= 130)
+    let l:width = 30
   else
-    let l:width=(&columns / 5)
+    let l:width = 30 + (&columns - 130) * 2 / 5
+    if l:width > 60
+      let l:width = 60
+    endif
   endif
   return l:width
 endfunction
@@ -749,7 +752,7 @@ endif
 if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
   nnoremap <F7> :TlistToggle<CR>
   " taglist.vim options
-  let Tlist_Compact_Format=1
+  let Tlist_Compact_Format=0
   "let Tlist_Auto_Open=1
   let Tlist_Process_File_Always=1
   let Tlist_Exit_OnlyWindow=1
