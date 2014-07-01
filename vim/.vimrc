@@ -798,16 +798,26 @@ if has("python")
   call ZackBundle('Valloric/MatchTagAlways')
 endif
 
-let g:syntastic_check_on_open=1
-if filereadable($HOME . "/vimfiles/bin/checkstyle-5.7-all.jar")
-  let g:syntastic_java_checkers=['checkstyle']
-  let g:syntastic_java_checkstyle_classpath=$HOME . "/vimfiles/bin/checkstyle-5.7-all.jar"
-  if AGILYSYS_CORP_SPECIFIC
-    let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/agilysys_checks.xml"
-  else
-    let g:syntastic_java_checkstyle_conf_file=$HOME . "/vimfiles/etc/zack_checks.xml"
+if GOOGLE_CORP_SPECIFIC
+  let g:syntastic_check_on_open = 1
+
+  " Extra Google-specific config opts
+  let g:syntastic_java_checkers = ['glint']
+  let g:syntastic_borg_checkers = ['borgcfg']
+  let g:syntastic_gcl_checkers = ['gcl']
+  let g:syntastic_python_checkers = ['pyflakes']
+else
+  if filereadable($HOME . "/vimfiles/bin/checkstyle-5.7-all.jar")
+    let g:syntastic_java_checkers = ['checkstyle']
+    let g:syntastic_java_checkstyle_classpath = $HOME . "/vimfiles/bin/checkstyle-5.7-all.jar"
+    if AGILYSYS_CORP_SPECIFIC
+      let g:syntastic_java_checkstyle_conf_file = $HOME . "/vimfiles/etc/agilysys_checks.xml"
+    else
+      let g:syntastic_java_checkstyle_conf_file = $HOME . "/vimfiles/etc/zack_checks.xml"
+    endif
   endif
 endif
+
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
@@ -838,12 +848,6 @@ if GOOGLE_CORP_SPECIFIC && GOOGLE_HAS_GOOGLE_VIM
   Glug g4
   Glug syntastic-google
   Glug youcompleteme-google
-
-  " Extra google-specific config opts
-  let g:syntastic_java_checkers = ['glint']
-  let g:syntastic_borg_checkers = ['borgcfg']
-  let g:syntastic_gcl_checkers = ['gcl']
-  let g:syntastic_python_checkers = ['pyflakes']
 
   " until background is fixed...
   let g:blazevim_execution = 'foreground'
