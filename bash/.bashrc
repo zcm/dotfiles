@@ -68,7 +68,15 @@ function bm {
 }
 
 function vimclass {
-  vim $(ack -l "\bclass $1\b" --ignore-file=ext:html,xml)
+  local FOUND_FILE=$(global -a $1)
+  if [[ "$FOUND_FILE" == "" ]]; then
+    FOUND_FILE=$(ack -l "\bclass $1\b" --ignore-file=ext:html,xml)
+  fi
+  if [[ "$FOUND_FILE" == "" ]]; then
+    echo "vimclass: error: cannot locate class '$1'"
+  else
+    vim "$FOUND_FILE"
+  fi
 }
 
 function vimack {
