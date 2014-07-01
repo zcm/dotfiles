@@ -68,7 +68,7 @@ function bm {
 }
 
 function vimclass {
-  vim $(ack -l "\bclass $1\b")
+  vim $(ack -l "\bclass $1\b" --ignore-file=ext:html,xml)
 }
 
 function vimack {
