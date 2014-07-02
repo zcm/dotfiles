@@ -245,7 +245,15 @@ class FileOperation(Operation):
         Log.warn('file already deleted: %s' % (to_target))
       except OSError as e:
         if e.errno == errno.EEXIST:
-          Log.warn('file already exists: %s' % (to_target))
+          message = 'in package %s: file already exists: %s' % (
+              self.package, to_target)
+          raise TargetFileExistsError(message)
+        elif e.errno == errno.ENOTEMPTY:
+          # This *probably* means that you're trying to erase an existing
+          # directory (that we did not create) when running with --clean.
+          message = 'in package %s: directory not empty: %s' % (
+              self.package, to_target)
+          raise TargetFileExistsError(message)
         elif e.errno == errno.ENOENT:
           Log.fail('target hit an OSError! this is probably a bug!')
           raise
@@ -282,6 +290,10 @@ class NonexistentDependencyError(AnalysisError):
 
 
 class OperationError(Exception):
+  pass
+
+
+class TargetFileExistsError(OperationError):
   pass
 
 
@@ -377,9 +389,6 @@ class SituationFile:
       }
       json.dump(situation_json, f)
 
-  def get_retryable_packages(self):
-    return self.failed
-
   def get_new_differences(self, new_symmap):
     new_key_set = set(new_symmap.keys())
     last_key_set = set(self.last_symmap.keys())
@@ -388,10 +397,11 @@ class SituationFile:
     removed_packages = last_key_set - intersection
     changed_packages = set(pkg for pkg in intersection
                            if new_symmap[pkg] != self.last_symmap[pkg])
-    return (new_packages, removed_packages, changed_packages)
+    retry_packages = self.failed
+    return (new_packages, removed_packages, changed_packages, retry_packages)
 
 
-PackageInfo = namedtuple('PackageInfo', ['new', 'removed', 'changed'])
+PackageInfo = namedtuple('PackageInfo', ['new', 'removed', 'changed', 'retry'])
 
 
 def process_package_file(package_name, package_file, package_info=None):
