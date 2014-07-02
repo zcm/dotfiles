@@ -23,5 +23,12 @@
       ".bash_profile",
       ".bashrc"
     ]
+  },
+  "fonts": {
+    "platform": "unix",
+    "file": {
+      "from": "fonts",
+      "to": ".fonts"
+    }
   }
 }
