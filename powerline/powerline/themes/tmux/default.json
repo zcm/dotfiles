@@ -24,7 +24,7 @@
 			{
 				"name": "date",
 				"args": {
-					"format": "%H:%M",
+					"format": "%I:%M %p",
 					"istime": true
 				}
 			},
