@@ -31,7 +31,7 @@
       "to": ".fonts"
     }
   },
-  "powerline" {
+  "powerline": {
     "platform": "unix",
     "file": {
       "from": "powerline",
