@@ -37,5 +37,9 @@
       "from": "powerline",
       "to": ".config/powerline"
     }
+  },
+  "tmux": {
+    "platform": "unix",
+    "file": ".tmux.conf"
   }
 }
