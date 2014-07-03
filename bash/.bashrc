@@ -10,7 +10,11 @@ if [ -f ~/.local_bashrc ]; then
   . ~/.local_bashrc
 fi
 
+export PATH=$PATH:~/.local/bin
+
 # User specific aliases and functions
+
+alias tmux="TERM=screen-256color-bce tmux"
 
 function bm {
   local STACK_ID=0
