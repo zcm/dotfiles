@@ -1113,6 +1113,11 @@ endif
 
 " End autocommand section
 
+" Set up some magic that lets NeoComplCache and eclim work together
+if isdirectory(s:vimfiles_dir . "/eclim")
+  let g:EclimCompletionMethod='omnifunc'
+endif
+
 
 if !RESTRICTED_MODE
   syntax enable
