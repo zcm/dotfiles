@@ -11,6 +11,12 @@ endtry
 
 set rtp+=~/vimfiles,~/vimfiles/after
 
+if (has("win32") || has("win64") || has("win95"))
+  let s:vimfiles_dir=$HOME . "\\vimfiles"
+else
+  let s:vimfiles_dir=$HOME . "/vimfiles"
+endif
+
 if has("persistent_undo")
   set undofile
   set undolevels=10000
@@ -297,8 +303,8 @@ if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
     endif
   elseif (has("win32") || has("win64") || has("win95"))
     " find the ctags utility
-    if filereadable($HOME . "\\vimfiles\\bin\\ctags.exe")
-      let g:Tlist_Ctags_Cmd = '"' . $HOME . '\\vimfiles\\bin\\ctags.exe"'
+    if filereadable(s:vimfiles_dir . "\\bin\\ctags.exe")
+      let g:Tlist_Ctags_Cmd = '"' . s:vimfiles_dir . '\\bin\\ctags.exe"'
     elseif filereadable("c:\\cygwin\\bin\\ctags.exe")
       let g:Tlist_Ctags_Cmd = "c:\\cygwin\\bin\\ctags.exe"
     endif
@@ -347,7 +353,7 @@ if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
 
   function AttemptToInstallMsysGit()
     if !executable("git") " Git is not available... we can try to install it maybe?
-      let l:wgetcmd = $HOME . '\vimfiles\bin\wget.exe'
+      let l:wgetcmd = s:vimfiles_dir . '\bin\wget.exe'
       if executable(l:wgetcmd)
         let l:MsysSetupExe = "Git-1.8.1.2-preview20130201.exe"
         let l:MsysGitUrl = "https://msysgit.googlecode.com/files/" . l:MsysSetupExe
@@ -576,7 +582,7 @@ call ipi#inspect()
 IP Vundle.vim
 
 filetype off " do NOT start vundle with this on!
-call vundle#begin("$HOME/vimfiles/ipi")
+call vundle#begin(s:vimfiles_dir . "/ipi")
 
 function IsBundleInstalled(bundle_name)
   return IsBundleInstalledWithAutoload(a:bundle_name, a:bundle_name)
@@ -587,7 +593,7 @@ function IsBundleInstalledWithAutoload(bundle_name, autoload_target)
 endfunction
 
 function IsBundleInstalledWithSomeFile(bundle_name, target)
-  return filereadable($HOME . "/vimfiles/ipi/" . a:bundle_name . "/".  a:target)
+  return filereadable(s:vimfiles_dir . "/ipi/" . a:bundle_name . "/".  a:target)
 endfunction
 
 function ZackBundleGetGitUserOrUrl(items)
@@ -684,7 +690,7 @@ function ZackBundle(...) abort
             endif
           endif
         else
-          if isdirectory($HOME . "/vimfiles/ipi/" . bundle_name)
+          if isdirectory(s:vimfiles_dir . "/ipi/" . bundle_name)
             execute 'IP ' . bundle_name
           endif
         endif
@@ -722,7 +728,7 @@ function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   endif
   let l:right_version = (version >= 703 && has('patch584')) || version > 703
   " On windows you have to build this yourself, bitch
-  let l:base_ycm_python = $HOME . "/vimfiles/ipi/YouCompleteMe/python/"
+  let l:base_ycm_python = s:vimfiles_dir . "/ipi/YouCompleteMe/python/"
   let l:windows_ok = has('win32') || has('win64')
   let l:windows_ok = l:windows_ok
       \ && filereadable(l:base_ycm_python . "libclang.dll")
@@ -770,7 +776,7 @@ if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
   " supporting this in the future. Or something. --zack
   "call ZackBundle('Lokaltog/powerline')
-  "set rtp+=$HOME/vimfiles/ipi/powerline/powerline/bindings/vim
+  "set rtp+=s:vimfiles_dir . "/ipi/powerline/powerline/bindings/vim
 endif
 
 if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
@@ -807,13 +813,13 @@ if GOOGLE_CORP_SPECIFIC
   let g:syntastic_gcl_checkers = ['gcl']
   let g:syntastic_python_checkers = ['pyflakes']
 else
-  if filereadable($HOME . "/vimfiles/bin/checkstyle-5.7-all.jar")
+  if filereadable(s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar")
     let g:syntastic_java_checkers = ['checkstyle']
-    let g:syntastic_java_checkstyle_classpath = $HOME . "/vimfiles/bin/checkstyle-5.7-all.jar"
+    let g:syntastic_java_checkstyle_classpath = s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar"
     if AGILYSYS_CORP_SPECIFIC
-      let g:syntastic_java_checkstyle_conf_file = $HOME . "/vimfiles/etc/agilysys_checks.xml"
+      let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/agilysys_checks.xml"
     else
-      let g:syntastic_java_checkstyle_conf_file = $HOME . "/vimfiles/etc/zack_checks.xml"
+      let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/zack_checks.xml"
     endif
   endif
 endif
@@ -880,9 +886,9 @@ filetype plugin indent on
 if !RESTRICTED_MODE
   function GetColorschemeFile(...) abort
     if len(a:000) == 1
-      return $HOME . "/vimfiles/colors/" . a:1
+      return s:vimfiles_dir . "/colors/" . a:1
     elseif len(a:000) == 2
-      return $HOME . "/vimfiles/ipi/" . a:1 . "/colors/" . a:2
+      return s:vimfiles_dir . "/ipi/" . a:1 . "/colors/" . a:2
     endif
   endfunction
 
