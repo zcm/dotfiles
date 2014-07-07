@@ -103,6 +103,7 @@ class bcolors:
     cls.OKGREEN = ''
     cls.WARNING = ''
     cls.FAIL = ''
+    cls.VERBOSE = ''
     cls.ENDC = ''
 
 
@@ -703,9 +704,24 @@ def get_verb(tense='perfect'):
 
 def check_windows_elevation():
   if sys.platform.startswith('win'):
+    # TODO(dremelofdeath): Make sure that this new behavior works in previous
+    # versions of Windows (i.e., older than 8.1).
+    """
     try:
       subprocess.check_call('cmd /q /c at > NUL')
     except subprocess.CalledProcessError:
+      Log.fail('You must run this script from an elevated command prompt.')
+      Log.fail('Right-click cmd.exe and choose "Run as administrator".')
+      sys.exit(1)
+      """
+    probably_fine = True
+    try:
+      temp = os.listdir(
+          os.sep.join([os.environ.get('SystemRoot','C:\windows'),'temp']))
+    except:
+      probably_fine = False
+
+    if not probably_fine:
       Log.fail('You must run this script from an elevated command prompt.')
       Log.fail('Right-click cmd.exe and choose "Run as administrator".')
       sys.exit(1)
