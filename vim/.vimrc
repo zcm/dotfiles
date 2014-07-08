@@ -1149,6 +1149,9 @@ endif
 " only use spaces instead of tabs
 set expandtab
 
+" Don't pop the preview window when using autocomplete
+set completeopt-=preview
+
 if GOOGLE_CORP_SPECIFIC
   " make sure this is just about the last line in the file, especially for corp-specific modes
   set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
