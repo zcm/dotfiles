@@ -14,6 +14,89 @@ export PATH=$PATH:~/.local/bin
 
 # User specific aliases and functions
 
+function authorize_ssh {
+  local SHOW_USAGE=0
+
+  local AUTHUSER=
+  local TARGETUSER=$AUTHUSER
+
+  if [ "$#" == "0" -o "$#" == "1" ]; then
+    printf "error: not enough arguments\n\n"
+    SHOW_USAGE=1
+  else
+    AUTHUSER=$1
+    local PUBLICKEY=~/.ssh/id_rsa.pub
+    local AUTHKEYS='.ssh/authorized_keys'
+    shift
+
+    if [ "$1" == "::" ]; then
+      if [ "$#" -lt "3" ]; then
+        echo "error: not enough arguments"
+        echo "       (did you specify hosts after -> username2?)"
+        echo ""
+        SHOW_USAGE=1
+      else
+        shift
+        TARGETUSER=$1
+        shift
+      fi
+    fi
+  fi
+
+  if [ "$SHOW_USAGE" -ne "0" ]; then
+    echo "usage: authorize_ssh username host1 [host2... hostN]"
+    echo "         Simple mode: Authorize the current user to login as username"
+    echo "         on the hosts."
+    echo ""
+    echo "       authorize_ssh username1 :: username2 host1 [host2... hostN]"
+    echo "         Advanced mode: First log in to the hosts as username1, then"
+    echo "         authorize the current user to login as username2. Useful for"
+    echo "         when you need to first use another user (i.e. root) to get"
+    echo "         access to the user you want to authorize."
+    echo ""
+    return 1
+  fi
+
+  local SUDOCMD=
+  if [ "$AUTHUSER" != "$TARGETUSER" ]; then
+    SUDOCMD="sudo -u $TARGETUSER"
+  fi
+
+  if [ -f "$PUBLICKEY" ]; then
+    local KEYVALUE=`cat $PUBLICKEY`
+
+    echo "Password for $AUTHUSER. Leave blank to prompt for each host."
+    stty -echo
+    local REMOTE_PW=
+    read -p "Remote password: " REMOTE_PW; echo
+    stty echo
+
+    local SSHPASS_CMD=
+    if [ "$REMOTE_PW" != "" ]; then
+      SSHPASS_CMD="sshpass -p $REMOTE_PW"
+    fi
+
+    while (( "$#" )); do
+      if [ "$AUTHUSER" != "$TARGETUSER" ]; then
+        echo "Authorizing user $TARGETUSER on host $1 via user $AUTHUSER..."
+      else
+        printf "Authorizing user %s on host %s...\n" "$AUTHUSER" "$1"
+      fi
+      local TARGET=/home/$TARGETUSER/$AUTHKEYS
+      $SSHPASS_CMD ssh $AUTHUSER@$1 "$SUDOCMD echo \"$KEYVALUE\" >> $TARGET"
+      if [ $? -ne 0 ]; then
+        printf "Failed.\n"
+      else
+        printf "Successfully authorized.\n"
+      fi
+      shift
+    done
+  else
+    echo "error: you must have a public key at $PUBLICKEY to authorize"
+    return 1
+  fi
+}
+
 function bm {
   local STACK_ID=0
   local FOUND_ID=0
