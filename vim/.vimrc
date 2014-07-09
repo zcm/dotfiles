@@ -487,6 +487,24 @@ endif
 nnoremap n nzzzv
 nnoremap N Nzzzv
 
+" NOTE: There are two known issues when using this implementation of block
+" matching in visual and operator-pending modes! These issues are deviations
+" (albeit minor ones) from Vim's default behavior when using these mappings.
+"
+"   1. Trying to select a visual block using 'vab' or the like when there is
+"      none on the current line drops you to normal mode
+"
+"      New behavior in this case: Return to normal mode
+"      Vim's behavior in this case: Stay in visual mode
+"
+"   2. Any command that accepts a motion in operator-pending mode and would, on
+"      success, drop you into insert mode (such as normal mode c) drops you into
+"      insert mode regardless of if there is a valid selection on the current
+"      line or not
+"
+"      New behavior in this case: Drop into insert mode at cursor position
+"      Vim's behavior in this case: Cancel operation and return to normal mode
+
 function! ZCM_Visual_PerformBlockMatchingMagic(left_char, right_char)
   exe "silent! normal! va".a:left_char."\<Esc>"
   let l:selection = ZCM_GetVisualSelection()
