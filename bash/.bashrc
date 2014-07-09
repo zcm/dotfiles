@@ -165,5 +165,5 @@ function vimclass {
 }
 
 function vimack {
-  vim $(ack -l "$1")
+  vim $(ack -l $@)
 }
