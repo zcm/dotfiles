@@ -522,37 +522,37 @@ endfunction
 vnoremap <silent> a( :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
 vnoremap <silent> a) :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
 vnoremap <silent> ab :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
-omap <silent> a( :<C-U>normal vab<CR>
-omap <silent> a) :<C-U>normal vab<CR>
-omap <silent> ab :<C-U>normal vab<CR>
+onoremap <silent> a( :<C-U>normal vab<CR>
+onoremap <silent> a) :<C-U>normal vab<CR>
+onoremap <silent> ab :<C-U>normal vab<CR>
 " replaces i( motion with a way better version
 vnoremap <silent> i( :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
 vnoremap <silent> i) :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
 vnoremap <silent> ib :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
-omap <silent> i( :<C-U>normal vib<CR>
-omap <silent> i) :<C-U>normal vib<CR>
-omap <silent> ib :<C-U>normal vib<CR>
+onoremap <silent> i( :<C-U>normal vib<CR>
+onoremap <silent> i) :<C-U>normal vib<CR>
+onoremap <silent> ib :<C-U>normal vib<CR>
 " same as above for a[ a] a{ a} i[ i] i{ i} motions
 vnoremap <silent> a[ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
 vnoremap <silent> a] :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
-omap <silent> a[ :<C-U>normal va[<CR>
-omap <silent> a] :<C-U>normal va]<CR>
+onoremap <silent> a[ :<C-U>normal va[<CR>
+onoremap <silent> a] :<C-U>normal va]<CR>
 vnoremap <silent> i[ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
 vnoremap <silent> i] :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
-omap <silent> i[ :<C-U>normal vi[<CR>
-omap <silent> i] :<C-U>normal vi]<CR>
+onoremap <silent> i[ :<C-U>normal vi[<CR>
+onoremap <silent> i] :<C-U>normal vi]<CR>
 vnoremap <silent> a{ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
 vnoremap <silent> a} :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
 vnoremap <silent> aB :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
-omap <silent> a{ :<C-U>normal va{<CR>
-omap <silent> a} :<C-U>normal va}<CR>
-omap <silent> aB :<C-U>normal vaB<CR>
+onoremap <silent> a{ :<C-U>normal va{<CR>
+onoremap <silent> a} :<C-U>normal va}<CR>
+onoremap <silent> aB :<C-U>normal vaB<CR>
 vnoremap <silent> i{ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
 vnoremap <silent> i} :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
 vnoremap <silent> iB :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
-omap <silent> i{ :<C-U>normal vi{<CR>
-omap <silent> i} :<C-U>normal vi}<CR>
-omap <silent> iB :<C-U>normal viB<CR>
+onoremap <silent> i{ :<C-U>normal vi{<CR>
+onoremap <silent> i} :<C-U>normal vi}<CR>
+onoremap <silent> iB :<C-U>normal viB<CR>
 
 hi! link TagListFileName VisualNOS
 
