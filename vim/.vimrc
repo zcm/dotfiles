@@ -27,6 +27,9 @@ if has("gui_running")
     sil! set gfn=ProggySquare:h11
   elseif has("gui_gtk")
     sil! set gfn=ProggySquareTT\ 12
+  elseif has("gui_win32")
+    sil! set gfn=Consolas
+    sil! set gfn=ProggySquareTT:h12
   endif
 endif
 
@@ -127,7 +130,7 @@ function JavaNotepadWindowSize(widthfactor)
 endfunction
 
 function BaseNotepadWindowSize(basewidth, widthfactor)
-  let &lines=(a:basewidth / 88) * 50
+  let &lines=(a:basewidth * 100 / 88) * 50 / 100
   let &columns=a:basewidth * a:widthfactor
 endfunction
 
@@ -994,11 +997,6 @@ if has("gui_running")
     au ZCM_Windows_StartFreshFromHomeDirectory VimEnter *
         \ sil call ChangeToHomeIfNewInstance()
     aug END
-
-    " set a font? (I'm cool with not doing this right now in Windows.)
-    " set gfn=Lucida_Console:h10:cANSI
-    " OMG CONSOLAS NOM NOM NOM
-    sil! set gfn=Consolas
 
     " If we're running on the Microsoft campus, then we want to do a few extra
     " things...
