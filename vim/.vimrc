@@ -1,50 +1,52 @@
-set nocompatible
-set showcmd
+if has('vim_starting')
+  set nocompatible
+  set showcmd
 
-" detect if we're in restricted mode before doing anything else
-let RESTRICTED_MODE=0
-try
-  sil call system("echo ...")
-catch /^Vim\%((\a\+)\)\=:E145/
-  let RESTRICTED_MODE=1
-endtry
+  " detect if we're in restricted mode before doing anything else
+  let RESTRICTED_MODE=0
+  try
+    sil call system("echo ...")
+  catch /^Vim\%((\a\+)\)\=:E145/
+    let RESTRICTED_MODE=1
+  endtry
 
-set rtp+=~/vimfiles,~/vimfiles/after
+  set rtp+=~/vimfiles,~/vimfiles/after
 
-if (has("win32") || has("win64") || has("win95"))
-  let s:vimfiles_dir=$HOME . "\\vimfiles"
-else
-  let s:vimfiles_dir=$HOME . "/vimfiles"
-endif
-
-if has("persistent_undo")
-  set undofile
-  set undolevels=10000
-endif
-
-if has("gui_running")
-  if has("gui_macvim")
-    sil! set gfn=ProggySquare:h11
-  elseif has("gui_gtk")
-    sil! set gfn=ProggySquareTT\ 12
-  elseif has("gui_win32")
-    sil! set gfn=Consolas
-    sil! set gfn=ProggySquareTT:h12
+  if (has("win32") || has("win64") || has("win95"))
+    let s:vimfiles_dir=$HOME . "\\vimfiles"
+  else
+    let s:vimfiles_dir=$HOME . "/vimfiles"
   endif
-endif
 
-if !has("win32") && match($TERM, "screen") != -1
-  set term=xterm-256color
-  let g:using_gnu_screen = 1
-else
-  let g:using_gnu_screen = 0
-endif
+  if has("persistent_undo")
+    set undofile
+    set undolevels=10000
+  endif
 
-" Override vim's terminal detection for GNOME Terminal (when not still running
-" in a GNU screen).
-if !has("gui_running") && has("unix")
-      \ && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
-  set t_Co=256
+  if has("gui_running")
+    if has("gui_macvim")
+      sil! set gfn=ProggySquare:h11
+    elseif has("gui_gtk")
+      sil! set gfn=ProggySquareTT\ 12
+    elseif has("gui_win32")
+      sil! set gfn=Consolas
+      sil! set gfn=ProggySquareTT:h12
+    endif
+  endif
+
+  if !has("win32") && match($TERM, "screen") != -1
+    set term=xterm-256color
+    let g:using_gnu_screen = 1
+  else
+    let g:using_gnu_screen = 0
+  endif
+
+  " Override vim's terminal detection for GNOME Terminal (when not still running
+  " in a GNU screen).
+  if !has("gui_running") && has("unix")
+        \ && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
+    set t_Co=256
+  endif
 endif
 
 let g:dock_hidden = 0
@@ -52,7 +54,7 @@ let g:dock_hidden = 0
 " on Mac OS X, gets the computer name (not the host name)
 if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
   let g:maccomputernamestring = ""
-  function MacGetComputerName()
+  function! MacGetComputerName()
     if g:maccomputernamestring == ""
       let g:maccomputernamestring = system("scutil --get ComputerName")
     endif
@@ -60,7 +62,7 @@ if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
   endfunction
 
   " on Mac OS X, toggle hiding the dock
-  function MacToggleDockHiding()
+  function! MacToggleDockHiding()
     " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
     if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1
         au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
@@ -80,16 +82,16 @@ endif
 
 " these two functions allow the user to toggle between
 " standard comments and Doxygen comments
-function EnableDoxygenComments()
+function! EnableDoxygenComments()
   let b:zcm_doxified = 1
   set syn+=.doxygen
 endfunction
-function DisableDoxygenComments()
+function! DisableDoxygenComments()
   let b:zcm_doxified = 0
   set syn-=.doxygen
 endfunction
 
-function ToggleDoxygenComments()
+function! ToggleDoxygenComments()
   if b:zcm_doxified == 0
     call EnableDoxygenComments()
     " this should be defined in the zcm_folding au group
@@ -103,7 +105,7 @@ endfunction
 
 " function for fullscreen maximize, at least on a 1280x800 Macintosh desktop
 " NOTE: you must use a GUIEnter autocommand to make this happen on startup
-function FullScreenMaximize_Harmony()
+function! FullScreenMaximize_Harmony()
   if has("macunix") && g:dock_hidden == 0
     call MacToggleDockHiding()
   endif
@@ -112,7 +114,7 @@ function FullScreenMaximize_Harmony()
   set columns=210
 endfunction
 
-function FullScreenMaximize_Bliss()
+function! FullScreenMaximize_Bliss()
   if has("macunix") && g:dock_hidden == 0
     call MacToggleDockHiding()
   endif
@@ -121,20 +123,20 @@ function FullScreenMaximize_Bliss()
   set columns=317
 endfunction
 
-function NotepadWindowSize(widthfactor)
+function! NotepadWindowSize(widthfactor)
   call BaseNotepadWindowSize(88, a:widthfactor)
 endfunction
 
-function JavaNotepadWindowSize(widthfactor)
+function! JavaNotepadWindowSize(widthfactor)
   call BaseNotepadWindowSize(110, a:widthfactor)
 endfunction
 
-function BaseNotepadWindowSize(basewidth, widthfactor)
-  let &lines=(a:basewidth * 100 / 88) * 50 / 100
-  let &columns=a:basewidth * a:widthfactor
+function! BaseNotepadWindowSize(basewidth, widthfactor)
+  let &lines = a:basewidth * 100 / 88 * 50 / 100
+  let &columns = a:basewidth * a:widthfactor
 endfunction
 
-function RecalculatePluginSplitWidth()
+function! RecalculatePluginSplitWidth()
   let l:width=0
   if (&columns <= 130)
     let l:width = 30
@@ -147,7 +149,7 @@ function RecalculatePluginSplitWidth()
   return l:width
 endfunction
 
-function RecalculatePluginSplitHeight()
+function! RecalculatePluginSplitHeight()
   let l:height=0
   if &lines > 30
     let l:height=(&lines / 4 + 3)
@@ -164,7 +166,7 @@ let GOOGLE_CORP_SPECIFIC=0
 " this is getting out of hand... this might be nice to move into a 'company detector' module...
 let AGILYSYS_CORP_SPECIFIC=filereadable($HOME . "/.vimrc_agilysys")
 
-function CheckRunningAtGoogle()
+function! CheckRunningAtGoogle()
   let l:domain_match=0
   if has("unix")
     let l:pattern="[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\."
@@ -188,7 +190,7 @@ if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "des
 elseif(CheckRunningAtGoogle())
   let GOOGLE_CORP_SPECIFIC=1
   if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
-    function Google_RecheckGtlistOrientationBounds()
+    function! Google_RecheckGtlistOrientationBounds()
       if (&columns > 162 || &lines < 49)
         let g:google_tags_list_orientation='vertical'
         let g:google_tags_list_height=''
@@ -199,14 +201,14 @@ elseif(CheckRunningAtGoogle())
         let g:google_tags_list_height=RecalculatePluginSplitHeight()
       endif
     endfunction
-    function Google_GtlistIfNotHelp()
+    function! Google_GtlistIfNotHelp()
       if &syn == "help"
         exe 'tag ' . expand('<cword>')
       else
         exe 'Gtlist ' . expand('<cword>')
       endif
     endfunction
-    function Google_GtjumpIfNotHelp()
+    function! Google_GtjumpIfNotHelp()
       if &syn == "help"
         exe 'tjump ' . expand('<cword>')
       else
@@ -224,7 +226,7 @@ elseif(CheckRunningAtGoogle())
     nnoremap <C-W><C-]> :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
     nnoremap <C-W>g<C-]> :vsp <CR>:call Google_GtjumpIfNotHelp()<CR>
   endif
-  function Google_FindAndSetGoogle3Root(add_java_paths)
+  function! Google_FindAndSetGoogle3Root(add_java_paths)
     let l:absolute=expand("%:p:h")
     let l:idx=stridx(absolute, "google3")
     if l:idx >= 0
@@ -256,7 +258,7 @@ if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
 endif
 
 if !RESTRICTED_MODE
-  function CheckIsCtagsExuberant()
+  function! CheckIsCtagsExuberant()
     let l:is_exuberant = 0
     " if cases copied from taglist.vim --zack
     if exists('g:Tlist_Ctags_Cmd')
@@ -287,7 +289,7 @@ if !RESTRICTED_MODE
     endif
     return l:is_exuberant
   endfunction
-  function RecheckTaglistOrientationBounds()
+  function! RecheckTaglistOrientationBounds()
     if (&columns > 162 || &lines < 49)
       let g:Tlist_Use_Horiz_Window=0
       let g:Tlist_WinWidth=RecalculatePluginSplitWidth()
@@ -341,7 +343,7 @@ endif
 
 " probably like exactly none of this works on win9x...
 if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
-  function RunInChainloadBatchFile(cmd)
+  function! RunInChainloadBatchFile(cmd)
     let l:tempbatchfile = fnamemodify(tempname(), ':h') . '\batch.cmd'
     exe 'redir! > ' . l:tempbatchfile
     sil echo a:cmd
@@ -354,7 +356,7 @@ if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
     endif
   endfunction
 
-  function AttemptToInstallMsysGit()
+  function! AttemptToInstallMsysGit()
     if !executable("git") " Git is not available... we can try to install it maybe?
       let l:wgetcmd = s:vimfiles_dir . '\bin\wget.exe'
       if executable(l:wgetcmd)
@@ -377,7 +379,7 @@ endif
 
 " function to make the window in the original starting position
 if !RESTRICTED_MODE
-  function OriginalWindowPosition()
+  function! OriginalWindowPosition()
     if MacGetComputerName() == "Euphoria"
       winp 351 187
     elseif MacGetComputerName() == "Bliss"
@@ -390,7 +392,7 @@ if !RESTRICTED_MODE
   endfunction
 
   " function to make the window the original size
-  function OriginalWindowSize()
+  function! OriginalWindowSize()
     if has("macunix") && g:dock_hidden == 0
       call MacToggleDockHiding()
     endif
@@ -400,7 +402,7 @@ if !RESTRICTED_MODE
   endfunction
 
   " function to do both of the above
-  function OriginalWindow()
+  function! OriginalWindow()
     call OriginalWindowSize()
     call OriginalWindowPosition()
   endfunction
@@ -600,24 +602,24 @@ call pathogen#infect()
 call ipi#inspect()
 
 " Time to kickstart Vundle using IPI... god what a hack
-IP Vundle.vim
+sil IP Vundle.vim
 
 filetype off " do NOT start vundle with this on!
 call vundle#begin(s:vimfiles_dir . "/ipi")
 
-function IsBundleInstalled(bundle_name)
+function! IsBundleInstalled(bundle_name)
   return IsBundleInstalledWithAutoload(a:bundle_name, a:bundle_name)
 endfunction
 
-function IsBundleInstalledWithAutoload(bundle_name, autoload_target)
+function! IsBundleInstalledWithAutoload(bundle_name, autoload_target)
   return IsBundleInstalledWithSomeFile(a:bundle_name, "autoload/" . a:autoload_target)
 endfunction
 
-function IsBundleInstalledWithSomeFile(bundle_name, target)
+function! IsBundleInstalledWithSomeFile(bundle_name, target)
   return filereadable(s:vimfiles_dir . "/ipi/" . a:bundle_name . "/".  a:target)
 endfunction
 
-function ZackBundleGetGitUserOrUrl(items)
+function! ZackBundleGetGitUserOrUrl(items)
   let github_user_or_git_url = ''
   let current = 0
   for item in a:items
@@ -635,7 +637,7 @@ endfunction
 let s:queued_bundles = []
 let s:processing_queued_bundles = 0
 
-function ProcessQueuedZackBundles() abort
+function! ProcessQueuedZackBundles() abort
   let s:processing_queued_bundles = 1
   for each in s:queued_bundles
     call ZackBundle(each[0], each[1], each[2], each[3])
@@ -646,7 +648,7 @@ endfunction
 " you can check for existence of plugin functions and do feature detection. If
 " you don't do this, use RTP instead
 
-function ZackBundle(...) abort
+function! ZackBundle(...) abort
   if len(a:000) == 1
     if stridx(a:1, '/') == -1
       call ZackBundle(a:1, '')
@@ -703,16 +705,16 @@ function ZackBundle(...) abort
         if stridx(a:3, ".vim") != -1
           if stridx(a:3, '/') == -1
             if IsBundleInstalledWithAutoload(bundle_name, a:3)
-              execute 'IP ' . bundle_name
+              execute 'sil IP ' . bundle_name
             endif
           else
             if IsBundleInstalledWithSomeFile(bundle_name, a:3)
-              execute 'IP ' . bundle_name
+              execute 'sil IP ' . bundle_name
             endif
           endif
         else
           if isdirectory(s:vimfiles_dir . "/ipi/" . bundle_name)
-            execute 'IP ' . bundle_name
+            execute 'sil IP ' . bundle_name
           endif
         endif
       else
@@ -737,7 +739,7 @@ Plugin 'gmarik/Vundle.vim'
 
 " YCM comes first. It's complicated and other plugins check if it's loaded.
 " And yes, there is a section for YCM all to itself.
-function CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
+function! CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
   endif
@@ -907,7 +909,7 @@ filetype plugin indent on
 
 " Color and window settings section
 if !RESTRICTED_MODE
-  function GetColorschemeFile(...) abort
+  function! GetColorschemeFile(...) abort
     if len(a:000) == 1
       return s:vimfiles_dir . "/colors/" . a:1
     elseif len(a:000) == 2
@@ -989,7 +991,7 @@ if has("gui_running")
 
     " and start from our My Documents (or other home) directory if starting
     " without a filename (i.e., a new instance with a blank buffer)
-    function ChangeToHomeIfNewInstance()
+    function! ChangeToHomeIfNewInstance()
       if @% == ""
         cd ~
       endif
