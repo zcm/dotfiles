@@ -845,6 +845,8 @@ else
   endif
 endif
 
+let g:syntastic_check_on_wq = 0
+
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
