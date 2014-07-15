@@ -165,6 +165,18 @@ function vimclass {
   fi
 }
 
+function _vimclass {
+  cur=${COMP_WORDS[COMP_CWORD]}
+  pattern="^$cur.*"
+  COMPREPLY=( $( compgen -W "$(global -x $pattern | sed -E -e 's/\s.*$//g')" -- $cur ) )
+}
+
+complete -o nospace -F _vimclass vimclass
+
 function vimack {
   vim $(ack -l $@)
+}
+
+function jumpto {
+  cd `global -a $@ | sed 's,/*[^/]\+/*$,,'`
 }
