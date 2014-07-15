@@ -473,6 +473,7 @@ nnoremap <F5> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
 nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
 nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
+nnoremap <F11> :SyntasticCheck<CR>
 
 " match indent
 nnoremap =. :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1))<CR>
@@ -1162,8 +1163,12 @@ if exists('*SyntasticStatuslineFlag')
 endif
 set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 
-if MICROSOFT_CORP_SPECIFIC != 1
-  set tw=80
+if AGILYSYS_CORP_SPECIFIC
+  set tw=120
+else
+  if MICROSOFT_CORP_SPECIFIC != 1
+    set tw=80
+  endif
 endif
 
 " only use spaces instead of tabs
