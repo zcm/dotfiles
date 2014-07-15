@@ -32,7 +32,7 @@ function authorize_ssh {
     if [ "$1" == "::" ]; then
       if [ "$#" -lt "3" ]; then
         echo "error: not enough arguments"
-        echo "       (did you specify hosts after -> username2?)"
+        echo "       (did you specify hosts after :: username2?)"
         echo ""
         SHOW_USAGE=1
       else
