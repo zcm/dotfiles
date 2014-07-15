@@ -165,13 +165,13 @@ function vimclass {
   fi
 }
 
-function _vimclass {
+function _complete_code_token {
   cur=${COMP_WORDS[COMP_CWORD]}
   pattern="^$cur.*"
   COMPREPLY=( $( compgen -W "$(global -x $pattern | sed -E -e 's/\s.*$//g')" -- $cur ) )
 }
 
-complete -o nospace -F _vimclass vimclass
+complete -o nospace -F _complete_code_token vimclass
 
 function vimack {
   vim $(ack -l $@)
@@ -180,3 +180,5 @@ function vimack {
 function jumpto {
   cd `global -a $@ | sed 's,/*[^/]\+/*$,,'`
 }
+
+complete -o nospace -F _complete_code_token jumpto
