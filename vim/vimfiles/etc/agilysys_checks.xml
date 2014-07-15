@@ -81,6 +81,7 @@
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <module name="JavadocMethod">
           <property name="allowMissingPropertyJavadoc" value="true"/>
+          <property name="scope" value="protected"/>
         </module>
         <module name="JavadocType"/>
         <module name="JavadocVariable">
@@ -144,9 +145,9 @@
         <!-- See http://checkstyle.sf.net/config_blocks.html -->
         <module name="AvoidNestedBlocks"/>
         <module name="EmptyBlock"/>
-        <module name="LeftCurly">
+        <!-- <module name="LeftCurly">
           <property name="option" value="nl"/>
-        </module>
+        </module> -->
         <module name="NeedBraces"/>
         <module name="RightCurly"/>
 
@@ -162,7 +163,7 @@
         </module>
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
-        <module name="MagicNumber"/>
+        <!-- <module name="MagicNumber"/> -->
         <module name="NoFinalizer"/>
         <module name="MissingSwitchDefault"/>
         <module name="RedundantThrows"/>
