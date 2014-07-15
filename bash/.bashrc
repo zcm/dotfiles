@@ -153,14 +153,15 @@ function bm {
 }
 
 function vimclass {
-  local FOUND_FILE=$(global -a $1)
+  local FOUND_FILE=$(global -a $1 | xargs)
+  echo $FOUND_FILE
   if [[ "$FOUND_FILE" == "" ]]; then
     FOUND_FILE=$(ack -l "\bclass $1\b" --ignore-file=ext:html,xml)
   fi
   if [[ "$FOUND_FILE" == "" ]]; then
     echo "vimclass: error: cannot locate class '$1'"
   else
-    vim "$FOUND_FILE"
+    vim $FOUND_FILE
   fi
 }
 
