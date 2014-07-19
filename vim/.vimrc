@@ -1016,7 +1016,14 @@ if has("gui_running")
     endif
   else
     " If we don't have any idea what is going on or where we are...
-      call NotepadWindowSize(1)
+    call NotepadWindowSize(1)
+  endif
+
+  " I'm pretty sure that the correct thing to do here is to check
+  " companies/location first, then platforms, then companies again, but that's
+  " not what's happening right now. So that's why this check is here.
+  if AGILYSYS_CORP_SPECIFIC
+    call JavaNotepadWindowSize(1)
   endif
 else
   " Only override the mouse settings if we're not in the GUI.
