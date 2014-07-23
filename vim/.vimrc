@@ -468,10 +468,11 @@ set cpo+=E
 
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
-inoremap <F5> <C-R>=strftime("%x %X %Z")<CR>
-nnoremap <F5> "=strftime("%x %X %Z")<CR>P
-inoremap <S-F5> <C-R>=strftime("%b %d, %Y")<CR>
-nnoremap <S-F5> "=strftime("%b %d, %Y")<CR>P
+nnoremap <F5> :ProjectRefresh<CR>
+inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
+nnoremap <F10> "=strftime("%x %X %Z")<CR>P
+inoremap <S-F10> <C-R>=strftime("%b %d, %Y")<CR>
+nnoremap <S-F10> "=strftime("%b %d, %Y")<CR>P
 nnoremap <C-F7> :call ToggleDoxygenComments()<CR>
 nnoremap <F11> :SyntasticCheck<CR>
 
