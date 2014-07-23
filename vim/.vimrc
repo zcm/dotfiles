@@ -918,6 +918,23 @@ if !RESTRICTED_MODE
     endif
   endfunction
 
+  if version >= 702
+    " There are performance problems in versions <7.2 because successive calls
+    " to :match result in a memory leak. This is fixed in newer versions with a
+    " call to clearmatches() (which is unavailable in <7.2).
+    if !GOOGLE_CORP_SPECIFIC
+      " Google has their own settings for this.
+      if has("autocmd")
+        highlight ExtraWhitespace ctermbg=red guibg=red
+        au ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
+        match ExtraWhitespace /\s\+$/
+        au InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
+        au InsertLeave * match ExtraWhitespace /\s\+$/
+        au BufWinLeave * call clearmatches()
+      endif
+    endif
+  endif
+
   colo elflord " default for if we set nothing else ever
   if !(has("win32") || has("win64")) || has("gui_running")
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
