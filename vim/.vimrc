@@ -493,8 +493,11 @@ unlet s:cpo_save
 " can't find their target.
 set cpo+=E
 
+let g:EclimJavaSearchSingleResult='edit'
+
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
+nnoremap <F3> :JavaSearchContext<CR>
 nnoremap <F5> :ProjectRefresh<CR>
 inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F10> "=strftime("%x %X %Z")<CR>P
