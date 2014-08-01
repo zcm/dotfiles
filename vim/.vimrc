@@ -316,6 +316,27 @@ if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
   endif
 endif
 
+" Helper function for below. Might be nice to have this standalone.
+function! SearchParentDirectoriesForFile(filename)
+  let l:last = getcwd()
+  let l:current = fnamemodify(l:last, ':h')
+  let l:sep = '/'
+  if has("win32") || has("win64") || has("win16") || has("win95") || has("dos32") || has("dos16") || has("os2")
+    let l:set = '\'
+  endif
+  while l:current != l:last
+    if isdirectory(l:current)
+      let l:currentfile = l:current . l:sep . a:filename
+      if filereadable(l:currentfile)
+        return l:currentfile
+      endif
+    endif
+    let l:last = l:current
+    let l:current = fnamemodify(l:last, ':h')
+  endwhile
+  return -1
+endfunction
+
 if !GOOGLE_CORP_SPECIFIC
   if has("cscope")
     set cscopetag
@@ -325,6 +346,12 @@ if !GOOGLE_CORP_SPECIFIC
       set csprg=gtags-cscope
       if filereadable("GTAGS")
         cs add GTAGS
+      else
+        " If the index isn't in the current directory, it could be in a parent.
+        let s:parent_gtags_file = SearchParentDirectoriesForFile("GTAGS")
+        if s:parent_gtags_file != -1 && filereadable(s:parent_gtags_file)
+          exe "cs add " . s:parent_gtags_file
+        endif
       endif
     else
       if filereadable("cscope.out")
