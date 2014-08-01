@@ -499,6 +499,7 @@ let g:EclimJavaSearchSingleResult='edit'
 nmap <C-C><C-N> :set invnumber<CR>
 nnoremap <F3> :JavaSearchContext<CR>
 nnoremap <F5> :ProjectRefresh<CR>
+nnoremap <S-F5> :ProjectRefreshAll<CR>
 inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F10> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F10> <C-R>=strftime("%b %d, %Y")<CR>
