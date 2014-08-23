@@ -162,99 +162,102 @@ endfunction
 let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
+let AGILYSYS_CORP_SPECIFIC=0
 
-" this is getting out of hand... this might be nice to move into a 'company detector' module...
-let AGILYSYS_CORP_SPECIFIC=filereadable($HOME . "/.vimrc_agilysys")
+if !filereadable($HOME . "/.vimrc_skip_company_detection")
+  " this is getting out of hand... this might be nice to move into a 'company detector' module...
+  let AGILYSYS_CORP_SPECIFIC=filereadable($HOME . "/.vimrc_agilysys")
 
-function! CheckRunningAtGoogle()
-  let l:domain_match=0
-  if has("unix")
-    let l:pattern="[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\."
-    let l:domain=substitute(substitute(hostname(), l:pattern, "", ""), "[\s\n]\\+", "", "")
-    let l:domain_match=(l:domain == "corp.google.com")
-    if !l:domain_match && !g:RESTRICTED_MODE
-      " for some reason, that didn't work... try through the shell if we can
-      let l:domain=substitute(substitute(system("echo $HOSTNAME"), l:pattern, "", ""), "[\s\n]\\+", "", "")
+  function! CheckRunningAtGoogle()
+    let l:domain_match=0
+    if has("unix")
+      let l:pattern="[a-zA-Z0-9_\\-]\\+\\.[a-zA-Z0-9_\\-]\\+\\."
+      let l:domain=substitute(substitute(hostname(), l:pattern, "", ""), "[\s\n]\\+", "", "")
       let l:domain_match=(l:domain == "corp.google.com")
-    endif
-  endif
-  return l:domain_match
-endfunction
-
-if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
-  let AMAZON_CORP_SPECIFIC=1
-  if(filereadable("/apollo/env/envImprovement/var/vimrc"))
-    so /apollo/env/envImprovement/var/vimrc
-    set rtp+=~/vimfiles,~/vimfiles/after
-  endif
-elseif(CheckRunningAtGoogle())
-  let GOOGLE_CORP_SPECIFIC=1
-  if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
-    function! Google_RecheckGtlistOrientationBounds()
-      if (&columns > 162 || &lines < 49)
-        let g:google_tags_list_orientation='vertical'
-        let g:google_tags_list_height=''
-        let g:google_tags_list_width=RecalculatePluginSplitWidth()
-      else
-        let g:google_tags_list_orientation='horizontal'
-        let g:google_tags_list_width=''
-        let g:google_tags_list_height=RecalculatePluginSplitHeight()
-      endif
-    endfunction
-    function! Google_GtlistIfNotHelp()
-      if &syn == "help"
-        exe 'tag ' . expand('<cword>')
-      else
-        exe 'Gtlist ' . expand('<cword>')
-      endif
-    endfunction
-    function! Google_GtjumpIfNotHelp()
-      if &syn == "help"
-        exe 'tjump ' . expand('<cword>')
-      else
-        exe 'Gtjump ' . expand('<cword>')
-      endif
-    endfunction
-    aug ZCM_GoogleGtagsResize
-    au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
-    aug END
-    source /usr/share/vim/google/gtags.vim
-    call Google_RecheckGtlistOrientationBounds()
-    let g:google_tags_list_format='long'
-    nnoremap <C-]> :call Google_GtlistIfNotHelp()<CR>
-    nnoremap <C-W>] :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
-    nnoremap <C-W><C-]> :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
-    nnoremap <C-W>g<C-]> :vsp <CR>:call Google_GtjumpIfNotHelp()<CR>
-  endif
-  function! Google_FindAndSetGoogle3Root(add_java_paths)
-    let l:absolute=expand("%:p:h")
-    let l:idx=stridx(absolute, "google3")
-    if l:idx >= 0
-      setlocal path<
-      execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
-      execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3"
-      if a:add_java_paths
-        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
-        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
+      if !l:domain_match && !g:RESTRICTED_MODE
+        " for some reason, that didn't work... try through the shell if we can
+        let l:domain=substitute(substitute(system("echo $HOSTNAME"), l:pattern, "", ""), "[\s\n]\\+", "", "")
+        let l:domain_match=(l:domain == "corp.google.com")
       endif
     endif
+    return l:domain_match
   endfunction
-  aug ZCM_SetGoogle3PathRoot
-  au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root(0)
-  au ZCM_SetGoogle3PathRoot BufEnter *.java call Google_FindAndSetGoogle3Root(1)
-  aug END
-elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
-  let MICROSOFT_CORP_SPECIFIC=1
-endif
 
-if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
-  " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
-  " ohome at MS, so I need to put it somewhere else in order to make sure
-  " that my build doesn't break.
-  if !isdirectory($APPDATA . "\\vimundodata")
-    call mkdir($APPDATA . "\\vimundodata")
+  if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
+    let AMAZON_CORP_SPECIFIC=1
+    if(filereadable("/apollo/env/envImprovement/var/vimrc"))
+      so /apollo/env/envImprovement/var/vimrc
+      set rtp+=~/vimfiles,~/vimfiles/after
+    endif
+  elseif(CheckRunningAtGoogle())
+    let GOOGLE_CORP_SPECIFIC=1
+    if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
+      function! Google_RecheckGtlistOrientationBounds()
+        if (&columns > 162 || &lines < 49)
+          let g:google_tags_list_orientation='vertical'
+          let g:google_tags_list_height=''
+          let g:google_tags_list_width=RecalculatePluginSplitWidth()
+        else
+          let g:google_tags_list_orientation='horizontal'
+          let g:google_tags_list_width=''
+          let g:google_tags_list_height=RecalculatePluginSplitHeight()
+        endif
+      endfunction
+      function! Google_GtlistIfNotHelp()
+        if &syn == "help"
+          exe 'tag ' . expand('<cword>')
+        else
+          exe 'Gtlist ' . expand('<cword>')
+        endif
+      endfunction
+      function! Google_GtjumpIfNotHelp()
+        if &syn == "help"
+          exe 'tjump ' . expand('<cword>')
+        else
+          exe 'Gtjump ' . expand('<cword>')
+        endif
+      endfunction
+      aug ZCM_GoogleGtagsResize
+      au ZCM_GoogleGtagsResize VimResized * call Google_RecheckGtlistOrientationBounds()
+      aug END
+      source /usr/share/vim/google/gtags.vim
+      call Google_RecheckGtlistOrientationBounds()
+      let g:google_tags_list_format='long'
+      nnoremap <C-]> :call Google_GtlistIfNotHelp()<CR>
+      nnoremap <C-W>] :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
+      nnoremap <C-W><C-]> :tab split<CR>:call Google_GtjumpIfNotHelp()<CR>
+      nnoremap <C-W>g<C-]> :vsp <CR>:call Google_GtjumpIfNotHelp()<CR>
+    endif
+    function! Google_FindAndSetGoogle3Root(add_java_paths)
+      let l:absolute=expand("%:p:h")
+      let l:idx=stridx(absolute, "google3")
+      if l:idx >= 0
+        setlocal path<
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx)
+        execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3"
+        if a:add_java_paths
+          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/java"
+          execute "setlocal path+=" . strpart(l:absolute,0,l:idx) . "google3/javatests"
+        endif
+      endif
+    endfunction
+    aug ZCM_SetGoogle3PathRoot
+    au ZCM_SetGoogle3PathRoot BufEnter * call Google_FindAndSetGoogle3Root(0)
+    au ZCM_SetGoogle3PathRoot BufEnter *.java call Google_FindAndSetGoogle3Root(1)
+    aug END
+  elseif((has("win32") || has("win64")) && substitute($USERDNSDOMAIN, "\\w\\+\\.", "", "") == "CORP.MICROSOFT.COM")
+    let MICROSOFT_CORP_SPECIFIC=1
   endif
-  set undodir="$APPDATA\vimundodata"
+
+  if MICROSOFT_CORP_SPECIFIC && ((has("win32") || has("win64")) && !has("win95"))
+    " Saving my undofiles alongside sourcefiles breaks my cleansrc step in
+    " ohome at MS, so I need to put it somewhere else in order to make sure
+    " that my build doesn't break.
+    if !isdirectory($APPDATA . "\\vimundodata")
+      call mkdir($APPDATA . "\\vimundodata")
+    endif
+    set undodir="$APPDATA\vimundodata"
+  endif
 endif
 
 if !RESTRICTED_MODE
