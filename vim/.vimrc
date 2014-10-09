@@ -860,6 +860,7 @@ endif
 call ZackBundle('tpope/vim-scriptease')
 call ZackBundle('tpope/vim-dispatch')
 call ZackBundle('tpope/vim-fugitive', 'force_ipi')
+call ZackBundle('tpope/vim-speeddating')
 
 if has("python")
   call ZackBundle('Valloric/MatchTagAlways')
