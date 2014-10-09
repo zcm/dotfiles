@@ -9,6 +9,7 @@ import base64
 import errno
 import json
 import os
+import platform
 import subprocess
 import sys
 
@@ -40,6 +41,13 @@ parser.add_argument('-n', '--dry_run',
     help = 'do not perform real filesystem operations (for testing)',
 )
 parser.set_defaults(dry_run=False)
+
+parser.add_argument('--noverify',
+    dest = 'verify',
+    action = 'store_false',
+    help = 'disable verification of already situated packages',
+)
+parser.set_defaults(verify=True)
 
 parser.add_argument('-q', '--quiet',
     dest = 'quiet',
@@ -405,7 +413,7 @@ class SituationFile:
 PackageInfo = namedtuple('PackageInfo', ['new', 'removed', 'changed', 'retry'])
 
 
-def process_package_file(package_name, package_file, package_info=None):
+def process_package_file(package_name, package_file, verify, package_info=None):
   from_attr = ''
   to_attr = ''
   platform_attr = []
@@ -456,25 +464,63 @@ def process_package_file(package_name, package_file, package_info=None):
         return MultiFileOperation(
             FileOperation(package_name, 'delete', from_attr, to_attr),
             FileOperation(package_name, 'symlink', from_attr, to_attr))
-    Log.verbose('operation: %s [%s -> %s]' % (operation, from_attr, to_attr))
-    return FileOperation(package_name, operation, from_attr, to_attr)
-  
+
+    verified = False
+
+    if verify:
+      Log.verbose('verifying file %s in package %s' % (to_attr, package_name))
+      try:
+        if os.path.isdir(to_attr):
+          Log.verbose('directory %s exists; this counts as verified for now' % (
+            to_attr))
+          verified = True
+        else:
+          with open(to_attr):
+            Log.verbose('file %s exists; this counts as verified for now' % (
+              to_attr))
+            verified = True
+      except IOError as e:
+        if e.errno == errno.ENOENT:
+          # This is fine -- we will simply relink the missing file.
+          Log.verbose('target file %s missing from package %s situation' % (
+            to_attr, package_name))
+        else:
+          Log.fail('unexpected I/O error -- possibly a bug. details:')
+          raise
+    else:
+      # We don't actually know this for sure, but we still want to skip it.
+      verified = True
+
+    if not verified:
+      Log.verbose('operation: %s [%s -> %s]' % (operation, from_attr, to_attr))
+      return FileOperation(package_name, operation, from_attr, to_attr)
+
   Log.verbose('skipping file %s' % from_attr)
   return None
 
 
-def process_package_files(package_name, package_files, package_info=None):
-  return [process_package_file(package_name, each, package_info)
-          for each in package_files if each is not None]
+def process_package_files(
+    package_name, package_files, verify, package_info=None):
+  return filter(None, [process_package_file(package_name, each, package_info)
+                       for each in package_files if each is not None])
 
 
 def process_package(package_name, symmap, package_info=None):
+  should_verify = False
+
   # Check first to see if we have to touch this package at all.
   if package_info:
     if package_name not in reduce(lambda x, y: x.union(y), package_info):
       # This package is unchanged.
-      # TODO(dremelofdeath): Make these Nones reason codes.
-      return None
+      Log.verbose('package %s appears to be unchanged' % (package_name))
+      if args.verify:
+        Log.verbose('will verify package %s' % (package_name))
+        should_verify = True
+      else:
+        Log.verbose('skipping package %s because verification is off' % (
+          package_name))
+        # TODO(dremelofdeath): Make these Nones reason codes.
+        return None
 
   package_obj = symmap[package_name]
 
@@ -483,17 +529,25 @@ def process_package(package_name, symmap, package_info=None):
   for each in package_obj:
     # Try to figure out what kind of statement we have.
     if each == 'file':
-      if 'ops' not in package_ops:
-        package_ops['ops'] = []
-      file = process_package_file(package_name, package_obj[each], package_info)
+      file = process_package_file(
+          package_name, package_obj[each], should_verify, package_info)
       if file:
+        Log.verbose('appending single operation for %s execution plan:' %
+            package_name)
+        Log.verbose('    %s' % file)
+        if 'ops' not in package_ops:
+          package_ops['ops'] = []
         package_ops['ops'].append(file)
     elif each == 'files':
-      if 'ops' not in package_ops:
-        package_ops['ops'] = []
       files = process_package_files(
-          package_name, package_obj[each], package_info)
-      package_ops['ops'] += files
+          package_name, package_obj[each], should_verify, package_info)
+      if files:
+        Log.verbose('appending operation list for %s execution plan:' %
+            package_name)
+        Log.verbose('    %s' % files)
+        if 'ops' not in package_ops:
+          package_ops['ops'] = []
+        package_ops['ops'] += files
     elif each == 'depends':
       if package_obj[each]:
         if 'depends' not in package_ops:
@@ -619,6 +673,13 @@ def perform_single_operation(package_name, operations, complete, failed={}):
         else:
           errors.error_list.append(e)
         Log.fail(e.message)
+      except AttributeError as e:
+        # This is about to become a very confusing explosion...
+        Log.fail('something has gone horribly wrong. dumping what we know:')
+        Log.fail('package_name: %s' % package_name)
+        Log.fail('operations[%s]: %s' % (package_name,
+          operations[package_name]))
+        raise
   except KeyError:
     # This is almost certainly because 'ops' isn't in the object.
     # We should probably warn about this.
@@ -642,7 +703,7 @@ def perform_single_operation(package_name, operations, complete, failed={}):
 
   # And now mark this operation complete
   complete[package_name] = True
-  
+
   Log.success('package %s successfully %s!' % (package_name, get_verb()))
   return (complete, failed)
 
@@ -656,6 +717,9 @@ def perform_operations(operations):
 
   for package_name in operations:
     try:
+      Log.verbose('beginning to situate package %s; planned operations:' %
+          package_name)
+      Log.verbose('    %s' % operations[package_name])
       if operations[package_name]:
         complete, failed = perform_single_operation(
             package_name, operations, complete, failed)
@@ -704,22 +768,32 @@ def get_verb(tense='perfect'):
 
 def check_windows_elevation():
   if sys.platform.startswith('win'):
-    # TODO(dremelofdeath): Make sure that this new behavior works in previous
-    # versions of Windows (i.e., older than 8.1).
-    """
+    win_platform_info = platform.win32_ver()
+    winnt_major_version = 0
+
     try:
-      subprocess.check_call('cmd /q /c at > NUL')
-    except subprocess.CalledProcessError:
-      Log.fail('You must run this script from an elevated command prompt.')
-      Log.fail('Right-click cmd.exe and choose "Run as administrator".')
-      sys.exit(1)
-      """
+      winnt_major_version = int(win_platform_info[0])
+    except ValueError:
+      # This might be XP or Vista or something else, but let's guess 6.
+      winnt_major_version = 6
+
     probably_fine = True
-    try:
-      temp = os.listdir(
-          os.sep.join([os.environ.get('SystemRoot','C:\windows'),'temp']))
-    except:
-      probably_fine = False
+
+    if winnt_major_version < 8:
+      # Older detection method for Windows 7 (and maybe Vista, XP, etc.).
+      # This does NOT work on Windows 8+ (or rather, it DOES work, which breaks
+      # this detection method).
+      try:
+        subprocess.check_call('cmd /q /c at > NUL')
+      except subprocess.CalledProcessError:
+        probably_fine = False
+    else:
+      # Newer detection method that definitely works on Windows 8.1.
+      try:
+        temp = os.listdir(
+            os.sep.join([os.environ.get('SystemRoot','C:\windows'),'temp']))
+      except:
+        probably_fine = False
 
     if not probably_fine:
       Log.fail('You must run this script from an elevated command prompt.')
