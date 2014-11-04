@@ -450,6 +450,8 @@ def process_package_file(package_name, package_file, verify, package_info=None):
         map(PlatformComputer.is_compatible_platform, platform_attr))
 
   if compatible_platform:
+    Log.verbose('platform for "%s" is compatible; computing operation' %
+        to_attr)
     operation = 'symlink'
     if args.clean:
       operation = 'delete'
@@ -464,6 +466,8 @@ def process_package_file(package_name, package_file, verify, package_info=None):
         return MultiFileOperation(
             FileOperation(package_name, 'delete', from_attr, to_attr),
             FileOperation(package_name, 'symlink', from_attr, to_attr))
+
+    Log.verbose('computed operation for "%s" is "%s"' % (to_attr, operation))
 
     verified = False
 
@@ -488,10 +492,12 @@ def process_package_file(package_name, package_file, verify, package_info=None):
           Log.fail('unexpected I/O error -- possibly a bug. details:')
           raise
     else:
+      Log.verbose('"verify" is off for "%s", will probably skip it' %
+          to_attr)
       # We don't actually know this for sure, but we still want to skip it.
       verified = True
 
-    if not verified:
+    if args.clean or not verified:
       Log.verbose('operation: %s [%s -> %s]' % (operation, from_attr, to_attr))
       return FileOperation(package_name, operation, from_attr, to_attr)
 
@@ -501,8 +507,9 @@ def process_package_file(package_name, package_file, verify, package_info=None):
 
 def process_package_files(
     package_name, package_files, verify, package_info=None):
-  return filter(None, [process_package_file(package_name, each, package_info)
-                       for each in package_files if each is not None])
+  return filter(None,
+      [process_package_file(package_name, each, verify, package_info)
+       for each in package_files if each is not None])
 
 
 def process_package(package_name, symmap, package_info=None):
@@ -521,6 +528,10 @@ def process_package(package_name, symmap, package_info=None):
           package_name))
         # TODO(dremelofdeath): Make these Nones reason codes.
         return None
+  else:
+    Log.verbose('package_info is unavailable! package "%s" must be verified!' %
+        package_name)
+    should_verify = True
 
   package_obj = symmap[package_name]
 
