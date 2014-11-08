@@ -11,6 +11,7 @@ if [ -f ~/.local_bashrc ]; then
 fi
 
 export PATH=$PATH:~/.local/bin
+export PS1="\[$(tput bold)\][\[$(tput setaf 2)\]\u\[$(tput setaf 0)\]@\[$(tput setaf 5)\]\h\[$(tput setaf 7)\] \W\[$(tput sgr0)\]\[$(tput bold)\]]\\$ \[$(tput sgr0)\]"
 
 # User specific aliases and functions
 
