@@ -185,8 +185,9 @@ if !filereadable($HOME . "/.vimrc_skip_company_detection")
 
   if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
     let AMAZON_CORP_SPECIFIC=1
-    if(filereadable("/apollo/env/envImprovement/var/vimrc"))
-      so /apollo/env/envImprovement/var/vimrc
+    " Just take the runtime hooks.
+    if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
+      so /apollo/env/envImprovement/var/vimruntimehook
       set rtp+=~/vimfiles,~/vimfiles/after
     endif
   elseif(CheckRunningAtGoogle())
