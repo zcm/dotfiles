@@ -10,12 +10,14 @@ if has('vim_starting')
     let RESTRICTED_MODE=1
   endtry
 
-  set rtp+=~/vimfiles,~/vimfiles/after
-
   if (has("win32") || has("win64") || has("win95"))
-    let s:vimfiles_dir=$HOME . "\\vimfiles"
+    let s:stdhome=$USERPROFILE
+    let s:vimfiles_dir=s:stdhome . "\\vimfiles"
+    exe 'set rtp+='.s:stdhome.'\vimfiles,'.s:stdhome.'\vimfiles\after'
   else
-    let s:vimfiles_dir=$HOME . "/vimfiles"
+    let s:stdhome=$HOME
+    let s:vimfiles_dir=s:stdhome . "/vimfiles"
+    set rtp+=~/vimfiles,~/vimfiles/after
   endif
 
   if has("persistent_undo")
@@ -164,9 +166,9 @@ let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
 let AGILYSYS_CORP_SPECIFIC=0
 
-if !filereadable($HOME . "/.vimrc_skip_company_detection")
+if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
   " this is getting out of hand... this might be nice to move into a 'company detector' module...
-  let AGILYSYS_CORP_SPECIFIC=filereadable($HOME . "/.vimrc_agilysys")
+  let AGILYSYS_CORP_SPECIFIC=filereadable(s:stdhome . "/.vimrc_agilysys")
 
   function! CheckRunningAtGoogle()
     let l:domain_match=0
@@ -187,7 +189,6 @@ if !filereadable($HOME . "/.vimrc_skip_company_detection")
     let AMAZON_CORP_SPECIFIC=1
     if(filereadable("/apollo/env/envImprovement/var/vimrc"))
       so /apollo/env/envImprovement/var/vimrc
-      set rtp+=~/vimfiles,~/vimfiles/after
     endif
   elseif(CheckRunningAtGoogle())
     let GOOGLE_CORP_SPECIFIC=1
@@ -795,7 +796,7 @@ function! CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM..
   endif
   " This is a per-machine override.
   " Touch the file this looks for to force disable YCM.
-  if filereadable($HOME . "/.vimrc_disable_ycm")
+  if filereadable(s:stdhome . "/.vimrc_disable_ycm")
     let g:zcm_you_can_complete_me = 0
     return g:zcm_you_can_complete_me
   endif
@@ -1063,7 +1064,7 @@ if has("gui_running")
     " without a filename (i.e., a new instance with a blank buffer)
     function! ChangeToHomeIfNewInstance()
       if @% == ""
-        cd ~
+        cd $USERPROFILE
       endif
     endfunction
 
