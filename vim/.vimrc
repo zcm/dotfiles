@@ -190,6 +190,7 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
     " Just take the runtime hooks.
     if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
       so /apollo/env/envImprovement/var/vimruntimehook
+      set rtp+=~/vimfiles,~/vimfiles/after
     endif
   elseif(CheckRunningAtGoogle())
     let GOOGLE_CORP_SPECIFIC=1
