@@ -169,7 +169,7 @@ function vimclass {
 function _complete_code_token {
   cur=${COMP_WORDS[COMP_CWORD]}
   pattern="^$cur.*"
-  COMPREPLY=( $( compgen -W "$(global -x $pattern | sed -E -e 's/\s.*$//g')" -- $cur ) )
+  COMPREPLY=( $( compgen -W "$(global -x $pattern | sed -r -e 's/\s.*$//g')" -- $cur ) )
 }
 
 complete -o nospace -F _complete_code_token vimclass
