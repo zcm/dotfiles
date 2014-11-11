@@ -1233,8 +1233,13 @@ set report=1
 set ut=10
 
 " ts and sw need to be the same for << and >> to work correctly!
-set ts=2
-set sw=2
+if AMAZON_CORP_SPECIFIC
+  set ts=4
+  set sw=4
+else
+  set ts=2
+  set sw=2
+endif
 
 " always show the status line
 set ls=2
