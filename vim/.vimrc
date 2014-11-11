@@ -903,6 +903,11 @@ else
   endif
 endif
 
+if has("autocmd")
+  au BufNewFile,BufRead .bash{rc,_profile} let b:shell='bash'
+  au BufNewFile,BufRead .zsh{rc,_profile} let b:shell='zsh'
+endif
+
 let g:syntastic_check_on_wq = 0
 
 call ZackBundle('scrooloose/syntastic', 'force_ipi')
