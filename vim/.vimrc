@@ -263,6 +263,18 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
   endif
 endif
 
+" Custom undodir settings
+if has("persistent_undo")
+  if has('unix')
+    if AMAZON_CORP_SPECIFIC
+      if !isdirectory(s:stdhome . '/.vim_undo')
+        call mkdir(s:stdhome . '/.vim_undo')
+      endif
+      exe 'set undodir='.s:stdhome.'/.vim_undo'
+    endif
+  endif
+endif
+
 if !RESTRICTED_MODE
   function! CheckIsCtagsExuberant()
     let l:is_exuberant = 0
@@ -1175,8 +1187,16 @@ if has("autocmd")
 
   " Exclude vimrc from undofile overrides since our copy is under source control
   aug zcm_vimrc_prevent_undofile_override
-  au BufNewFile,BufReadPre .vimrc sil! setlocal undodir=.
-  au BufNewFile,BufReadPre _vimrc sil! setlocal undodir=.
+  au BufNewFile,BufReadPre {.,_}vimrc sil! setlocal undodir=.
+  au BufNewFile,BufReadPre .bash{rc,_profile} sil! setlocal undodir=.
+  au BufNewfile,BufReadPre .screenrc sil! setlocal undodir=.
+  au BufNewfile,BufReadPre .tmux.conf sil! setlocal undodir=.
+  au BufNewfile,BufReadPre ConEmu.xml sil! setlocal undodir=.
+  au BufNewfile,BufReadPre .git{ignore,modules} sil! setlocal undodir=.
+  au BufNewfile,BufReadPre situate.py sil! setlocal undodir=.
+  au BufNewfile,BufReadPre situate_core.py sil! setlocal undodir=.
+  au BufNewfile,BufReadPre symmap.json sil! setlocal undodir=.
+  au BufNewfile,BufReadPre symmap.test.json sil! setlocal undodir=.
   aug END
 
   au QuickFixCmdPost,BufWinEnter,BufWinLeave *
