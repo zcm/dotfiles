@@ -907,9 +907,51 @@ else
   if filereadable(s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar")
     let g:syntastic_java_checkers = ['checkstyle']
     let g:syntastic_java_checkstyle_classpath = s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar"
-    if AGILYSYS_CORP_SPECIFIC
+    let s:use_default_zack_checks = 0
+    if AMAZON_CORP_SPECIFIC && has('unix')
+      let s:amzn_checkstyle_ws = '/workspace/CheckstyleAntBuildLogic/src/CheckstyleAntBuildLogic'
+      let s:amzn_checkfile_dir = s:amzn_checkstyle_ws . '/configuration/antfiles/config/'
+      let s:amzn_checkfile = s:amzn_checkfile_dir . 'checkstyle-rules.xml'
+      let s:amzn_suppressions = s:amzn_checkfile_dir . 'checkstyle-suppressions.xml'
+
+      function! ZCM_UpdateAmazonCheckStyleDirectory()
+        let g:syntastic_java_checkstyle_args = '-Dbasedir="'.getcwd().'"'
+        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.legacypackagedocs=false'
+        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.suppression.filter='
+        let g:syntastic_java_checkstyle_args .= s:amzn_suppressions
+        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.linelength=100'
+      endfunction
+
+      if filereadable(s:amzn_checkfile)
+        if filereadable(s:amzn_suppressions)
+          let g:syntastic_check_on_open = 1
+          let g:syntastic_java_checkstyle_conf_file = s:amzn_checkfile
+          " Ignore missing Javadoc. Amazon's checks for this are far too noisy to be practical.
+          let g:syntastic_java_checkstyle_quiet_messages = { "regex": 'Missing a Javadoc comment' }
+          call ZCM_UpdateAmazonCheckStyleDirectory()
+          if has('autocmd')
+            au BufEnter *.java call ZCM_UpdateAmazonCheckStyleDirectory()
+          else
+            echom "Autocommands are mysteriously unavailable. Without them, it will be impossible"
+            echom "to automatically update your basedir property. Fix this and recompile."
+          endif
+        else
+          echom "Amazon's CheckStyle checks are available, but the suppressions file is missing."
+          echom "Using the defaults instead. Maybe the filename changed?"
+          let s:use_default_zack_checks = 1
+        endif
+      else
+        echom "Amazon's CheckStyle checks are unavailable. Using the defaults instead."
+        echom "Pull the CheckstyleAntBuildLogic package into your workspace and try again."
+        let s:use_default_zack_checks = 1
+      endif
+    elseif AGILYSYS_CORP_SPECIFIC
       let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/agilysys_checks.xml"
     else
+      let s:use_default_zack_checks = 1
+    endif
+    " This is the fallback for if everything else is missing for some reason.
+    if s:use_default_zack_checks
       let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/zack_checks.xml"
     endif
   endif
