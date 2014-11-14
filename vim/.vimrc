@@ -10,19 +10,19 @@ if has('vim_starting')
     let RESTRICTED_MODE=1
   endtry
 
+  if has("persistent_undo")
+    set undofile
+    set undolevels=10000
+  endif
+
   if (has("win32") || has("win64") || has("win95"))
     let s:stdhome=$USERPROFILE
     let s:vimfiles_dir=s:stdhome . "\\vimfiles"
-    exe 'set rtp+='.s:stdhome.'\vimfiles,'.s:stdhome.'\vimfiles\after'
+    exe 'set rtp+="'.s:stdhome.'\vimfiles","'.s:stdhome.'\vimfiles\after"'
   else
     let s:stdhome=$HOME
     let s:vimfiles_dir=s:stdhome . "/vimfiles"
     set rtp+=~/vimfiles,~/vimfiles/after
-  endif
-
-  if has("persistent_undo")
-    set undofile
-    set undolevels=10000
   endif
 
   if has("gui_running")
