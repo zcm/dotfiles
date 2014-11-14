@@ -1174,6 +1174,7 @@ if has("autocmd")
   " set custom syntaxes here, before syntax enable
   au BufNewFile,BufRead *.applescript set syn=applescript
   au BufNewFile,BufRead *.hx set syn=haxe
+  au BufNewFile,BufRead !.tags set syn=javascript
 
   if MICROSOFT_CORP_SPECIFIC
     au BufWinEnter,BufNewFile,BufRead *.err set ft=err
