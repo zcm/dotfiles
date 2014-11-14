@@ -904,9 +904,10 @@ if GOOGLE_CORP_SPECIFIC
   let g:syntastic_gcl_checkers = ['gcl']
   let g:syntastic_python_checkers = ['pyflakes']
 else
-  if filereadable(s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar")
+  let s:checkstyle_jar = s:vimfiles_dir . "/bin/checkstyle-6.0-all.jar"
+  if filereadable(s:checkstyle_jar)
     let g:syntastic_java_checkers = ['checkstyle']
-    let g:syntastic_java_checkstyle_classpath = s:vimfiles_dir . "/bin/checkstyle-5.7-all.jar"
+    let g:syntastic_java_checkstyle_classpath = s:checkstyle_jar
     let s:use_default_zack_checks = 0
     if AMAZON_CORP_SPECIFIC && has('unix')
       let s:amzn_checkstyle_ws = '/workspace/CheckstyleAntBuildLogic/src/CheckstyleAntBuildLogic'
