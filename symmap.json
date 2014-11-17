@@ -41,5 +41,12 @@
   "tmux": {
     "platform": "unix",
     "file": ".tmux.conf"
+  },
+  "fish": {
+    "platform": "unix",
+    "file": {
+      "from": "functions",
+      "to": ".config/fish/functions"
+    }
   }
 }
