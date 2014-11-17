@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 # Written by Zachary Murray (dremelofdeath) on 11/04/2013.
