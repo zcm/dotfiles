@@ -534,6 +534,17 @@ def process_package(package_name, symmap, package_info=None):
           package_name))
         # TODO(dremelofdeath): Make these Nones reason codes.
         return None
+    else:
+      # Something has changed about this package, need to verify every file
+      should_verify = True
+      if package_name in package_info.new:
+        Log.info('detected new package %s!' % (package_name))
+      if package_name in package_info.changed:
+        Log.info('detected a change in package %s!' % (package_name))
+      if package_name in package_info.removed:
+        Log.info('detected removal of package %s!' % (package_name))
+      if package_name in package_info.retry:
+        Log.verbose('planning retry of package %s' % (package_name))
   else:
     Log.verbose('package_info is unavailable! package "%s" must be verified!' %
         package_name)
@@ -966,3 +977,4 @@ def main():
 if __name__ == '__main__':
   main()
 
+# vim:et:ai:ts=2:sw=2
