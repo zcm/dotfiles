@@ -1300,6 +1300,11 @@ if !RESTRICTED_MODE
   syntax enable
 endif
 
+" If the login shell is fish, change it to something more reasonable for vim
+if &shell =~# 'fish$'
+  set shell=bash
+endif
+
 set report=1
 
 set ut=10
