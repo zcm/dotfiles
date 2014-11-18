@@ -44,9 +44,15 @@
   },
   "fish": {
     "platform": "unix",
-    "file": {
-      "from": "functions",
-      "to": ".config/fish/functions"
-    }
+    "files": [
+      {
+        "from": "functions",
+        "to": ".config/fish/functions"
+      },
+      {
+        "from": "completions",
+        "to": ".config/fish/completions"
+      }
+    ]
   }
 }
