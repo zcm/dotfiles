@@ -851,9 +851,13 @@ else
     "let g:neocomplcache_enable_at_startup = 1
     call ZackBundle('Shougo/neocomplcache.vim')
     " So instead of using the default startup, we'll do it ourselves here.
-    if has("autocmd") && exists("*NeoComplCacheEnable")
+    if has("autocmd")
       aug ZCM_Start_NeoComplCache
-      au ZCM_Start_NeoComplCache VimEnter * NeoComplCacheEnable
+      au ZCM_Start_NeoComplCache VimEnter *
+          \ if exists(":NeoComplCacheEnable") == 2 |
+            \ NeoComplCacheEnable |
+            \ exe 'au! ZCM_Start_NeoComplCache' |
+          \ endif
       aug END
     endif
     " <TAB> completion.
