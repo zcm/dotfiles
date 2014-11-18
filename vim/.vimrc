@@ -814,18 +814,24 @@ function! CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM..
     let g:zcm_you_can_complete_me = 0
     return g:zcm_you_can_complete_me
   endif
-  let l:right_version = (version >= 703 && has('patch584')) || version > 703
-  " On windows you have to build this yourself, bitch
-  let l:base_ycm_python = s:vimfiles_dir . "/ipi/YouCompleteMe/python/"
-  let l:windows_ok = has('win32') || has('win64')
-  let l:windows_ok = l:windows_ok
-      \ && filereadable(l:base_ycm_python . "libclang.dll")
-  let l:windows_ok = l:windows_ok
-      \ && filereadable(l:base_ycm_python . "ycm_core.pyd")
-  " screw mac for now...
-  " it takes WAY too much work to get YCM working on non-Linux things...
-  let g:zcm_you_can_complete_me =
-      \ l:right_version && !has('macunix') && (l:windows_ok || has('unix'))
+  " YCM is *so* annoying to set up, and it prints annoying messages if you don't
+  " have it properly configured. Only enable it if requested from now on.
+  if filereadable(s:stdhome . "/.vimrc_maybe_enable_ycm")
+    let l:right_version = (version >= 703 && has('patch584')) || version > 703
+    " On windows you have to build this yourself, bitch
+    let l:base_ycm_python = s:vimfiles_dir . "/ipi/YouCompleteMe/python/"
+    let l:windows_ok = has('win32') || has('win64')
+    let l:windows_ok = l:windows_ok
+        \ && filereadable(l:base_ycm_python . "libclang.dll")
+    let l:windows_ok = l:windows_ok
+        \ && filereadable(l:base_ycm_python . "ycm_core.pyd")
+    " screw mac for now...
+    " it takes WAY too much work to get YCM working on non-Linux things...
+    let g:zcm_you_can_complete_me =
+        \ l:right_version && !has('macunix') && (l:windows_ok || has('unix'))
+  else
+    let g:zcm_you_can_complete_me = 0
+  endif
   return g:zcm_you_can_complete_me
 endfunction
 
@@ -890,6 +896,8 @@ call ZackBundle('tpope/vim-scriptease')
 call ZackBundle('tpope/vim-dispatch')
 call ZackBundle('tpope/vim-fugitive', 'force_ipi')
 call ZackBundle('tpope/vim-speeddating')
+
+call ZackBundle('dag/vim-fish')
 
 if has("python")
   call ZackBundle('Valloric/MatchTagAlways')
@@ -1300,6 +1308,7 @@ set ut=10
 if AMAZON_CORP_SPECIFIC
   set ts=4
   set sw=4
+  au BufNewFile,BufRead *.fish setlocal ts=2 | setlocal sw=2
 else
   set ts=2
   set sw=2
