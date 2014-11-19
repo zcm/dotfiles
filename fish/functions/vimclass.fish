@@ -11,6 +11,6 @@ function vimclass --description "Edit the file containing the specified class in
   if [ "$found_file" = "" ]
     echo "vimclass: error: cannot locate class '$search_target'" >&2
   else
-    vim $found_file
+    eval "command vim" $found_file
   end
 end
