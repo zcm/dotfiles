@@ -189,6 +189,10 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
     let AMAZON_CORP_SPECIFIC=1
     " Just take the runtime hooks.
     if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
+      " Before sourcing Amazon's runtime hook, set a hack to avoid loading
+      " SuperTab, which is pretty much the worst because it conflicts with
+      " NeoComplCache.
+      let complType="DO_NOT_USE_EVER"
       so /apollo/env/envImprovement/var/vimruntimehook
       set rtp+=~/vimfiles,~/vimfiles/after
     endif
