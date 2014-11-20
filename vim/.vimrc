@@ -342,9 +342,15 @@ endif
 function! SearchParentDirectoriesForFile(filename)
   let l:last = getcwd()
   let l:current = fnamemodify(l:last, ':h')
+  return SearchParentDirectoriesForFileFrom(a:filename, l:last, l:current)
+endfunction
+
+function! SearchParentDirectoriesForFileFrom(filename, last, current)
+  let l:last = a:last
+  let l:current = a:current
   let l:sep = '/'
   if has("win32") || has("win64") || has("win16") || has("win95") || has("dos32") || has("dos16") || has("os2")
-    let l:set = '\'
+    let l:sep = '\'
   endif
   while l:current != l:last
     if isdirectory(l:current)
@@ -359,21 +365,41 @@ function! SearchParentDirectoriesForFile(filename)
   return -1
 endfunction
 
+function! MaybeUpdateGlobal()
+  if g:zcm_gtags_known
+    let l:last = expand('%:p')
+    let l:current = expand('%:p:h')
+    let l:file = SearchParentDirectoriesForFileFrom("GTAGS", l:last, l:current)
+    if l:file != -1
+      let l:dir = fnamemodify(l:file, ":h")
+      sil! call system("pushd ". shellescape(l:dir)." && global -u && popd")
+    endif
+  endif
+endfunction
+
 if !GOOGLE_CORP_SPECIFIC
   if has("cscope")
     set cscopetag
     set nocsverb
+    let g:zcm_gtags_known=0
     if executable("gtags-cscope")
       " Not to be confused with Google's Gtags, I assure you.
       set csprg=gtags-cscope
       if filereadable("GTAGS")
         cs add GTAGS
+        let g:zcm_gtags_known=1
       else
         " If the index isn't in the current directory, it could be in a parent.
         let s:parent_gtags_file = SearchParentDirectoriesForFile("GTAGS")
         if s:parent_gtags_file != -1 && filereadable(s:parent_gtags_file)
           exe "cs add " . s:parent_gtags_file
+          let g:zcm_gtags_known=1
         endif
+      endif
+      if has('autocmd') && executable('global')
+        aug ZCM_AutoGlobalUpdate
+          au ZCM_AutoGlobalUpdate BufWritePost * sil! call MaybeUpdateGlobal()
+        aug END
       endif
     else
       if filereadable("cscope.out")
