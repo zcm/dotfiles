@@ -1095,15 +1095,23 @@ if !RESTRICTED_MODE
   colo elflord " default for if we set nothing else ever
   if !(has("win32") || has("win64")) || has("gui_running")
     " oh god please no, not in cmd.exe. it literally looks like poop everywhere
-    if filereadable(GetColorschemeFile("vim-vividchalk", "vividchalk.vim"))
+    let s:has_colo_vividchalk = filereadable(GetColorschemeFile("vim-vividchalk", "vividchalk.vim"))
+    let s:has_colo_dante = filereadable(GetColorschemeFile("dante.vim"))
+
+    if s:has_colo_vividchalk && (!has("unix") || $TERM != "linux")
       sil! colo vividchalk " this thing is sweet
     elseif has("gui_running")
-      if filereadable(GetColorschemeFile("dante.vim"))
+      if s:has_colo_dante
         sil! colo dante
       else
         colo desert
       endif
       " here lies zackvim, where it has gone I will never know
+    else
+      " If we get here, we're probably running in a non-GUI Linux framebuffer
+      if s:has_colo_dante
+        sil! colo dante
+      endif
     endif
   endif
 endif
