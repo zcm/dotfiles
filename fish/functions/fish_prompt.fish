@@ -10,5 +10,21 @@ function fish_prompt --description 'Write out the prompt'
     case root; set prompt_symbol '#'
     case '*';  set prompt_symbol '$'
   end
-  printf "%s[%s%s%s@%s%s %s%s%s]%s%s " (set_color --bold white) (set_color --bold F80) $USER (set_color --bold black) (set_color --bold 92F) (hostname -s) (set_color --bold $fish_color_cwd) $pwd (set_color --bold white) $prompt_symbol (set_color normal)
+  set -l color_base (set_color --bold white)
+  set -l color_back (set_color --bold black)
+  set -l color_user (set_color --bold green)
+  set -l color_host (set_color --bold purple)
+  if [ "$TERM" != "linux" ]
+    set color_user (set_color --bold F80)
+    set color_host (set_color --bold 92F)
+  end
+  set -l color_cwd (set_color --bold $fish_color_cwd)
+  printf "%s[%s%s%s@%s%s %s%s%s]%s%s " \
+    $color_base \
+      $color_user $USER \
+      $color_back \
+      $color_host (hostname -s) \
+      $color_cwd $pwd \
+    $color_base \
+    $prompt_symbol (set_color normal)
 end
