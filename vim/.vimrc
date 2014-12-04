@@ -970,7 +970,8 @@ else
           let g:syntastic_check_on_open = 1
           let g:syntastic_java_checkstyle_conf_file = s:amzn_checkfile
           " Ignore missing Javadoc. Amazon's checks for this are far too noisy to be practical.
-          let g:syntastic_java_checkstyle_quiet_messages = { "regex": 'Missing a Javadoc comment' }
+          let g:syntastic_java_checkstyle_quiet_messages =
+              \ { "regex": '\v(Missing a Javadoc comment)|(Unable to get class information)' }
           call ZCM_UpdateAmazonCheckStyleDirectory()
           if has('autocmd')
             au BufEnter *.java call ZCM_UpdateAmazonCheckStyleDirectory()
