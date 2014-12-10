@@ -187,15 +187,42 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
 
   if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
     let AMAZON_CORP_SPECIFIC=1
-    " Just take the runtime hooks.
-    if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
+    " Just take the runtime hooks. (Edit: No, don't even do this. Avoid loading
+    " these ancient plugins AT ALL COSTS.)
+    "if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
       " Before sourcing Amazon's runtime hook, set a hack to avoid loading
       " SuperTab, which is pretty much the worst because it conflicts with
       " NeoComplCache.
-      let complType="DO_NOT_USE_EVER"
-      so /apollo/env/envImprovement/var/vimruntimehook
-      set rtp+=~/vimfiles,~/vimfiles/after
-    endif
+      "let complType="DO_NOT_USE_EVER"
+      " Just get rid of most/all of the plugins. I never use them and they're
+      " annoying.
+      "let loaded_bufexplorer=1
+      "so /apollo/env/envImprovement/var/vimruntimehook
+      "set rtp+=~/vimfiles,~/vimfiles/after
+    "endif
+    " Instead, do this customized load to get everything but the plugins:
+    let g:ApolloRoot = "/apollo/env/envImprovement"
+    set rtp+=$HOME/.vim
+    set rtp+=/apollo/env/envImprovement/vim/amazon/brazil-config
+    set rtp+=/apollo/env/envImprovement/vim/amazon/brazil_inc_path
+    set rtp+=/apollo/env/envImprovement/vim/amazon/dat
+    set rtp+=/apollo/env/envImprovement/vim/amazon/FLLog
+    set rtp+=/apollo/env/envImprovement/vim/amazon/ion
+    set rtp+=/apollo/env/envImprovement/vim/amazon/mail-after
+    set rtp+=/apollo/env/envImprovement/vim/amazon/mosel
+    set rtp+=/apollo/env/envImprovement/vim/amazon/object
+    set rtp+=/apollo/env/envImprovement/vim/amazon/Perforce
+    set rtp+=/apollo/env/envImprovement/vim/amazon/s3
+    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-mason
+    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-perl
+    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-ruby
+    set rtp+=/apollo/env/envImprovement/vim/amazon/wiki_browser
+    "set rtp+=/apollo/env/envImprovement/vim  " <-- evil plugins here
+    set rtp+=$VIMRUNTIME
+    set rtp+=/apollo/env/envImprovement/vim/amazon/mail-after/after
+    "set rtp+=/apollo/env/envImprovement/vim/after  " <-- here too
+    set rtp+=$HOME/.vim/after
+    set rtp+=~/vimfiles,~/vimfiles/after
   elseif(CheckRunningAtGoogle())
     let GOOGLE_CORP_SPECIFIC=1
     if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
