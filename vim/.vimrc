@@ -745,6 +745,7 @@ function! ZackBundleGetGitUserOrUrl(items)
 endfunction
 
 let s:queued_bundles = []
+let s:supported_bundles = {}
 let s:processing_queued_bundles = 0
 
 function! ProcessQueuedZackBundles() abort
@@ -752,6 +753,22 @@ function! ProcessQueuedZackBundles() abort
   for each in s:queued_bundles
     call ZackBundle(each[0], each[1], each[2], each[3])
   endfor
+endfunction
+
+function! ZackBundleNameEscape(bundle_name) abort
+  let l:current = substitute(a:bundle_name, "\.", "xOx", "g")
+  let l:current = substitute(l:current, "-", "xDx", "g")
+  let l:current = substitute(l:current, "_", "xUx", "g")
+  return l:current
+endfunction
+
+function! s:SupportZackBundle(bundle_name, load_method) abort
+  let l:escaped = ZackBundleNameEscape(a:bundle_name)
+  exe 'let s:supported_bundles.'.l:escaped.'="'.a:load_method.'"'
+endfunction
+
+function! ZackBundleSupported(bundle_name) abort
+  return has_key(s:supported_bundles, ZackBundleNameEscape(a:bundle_name))
 endfunction
 
 " NOTE: use force_ipi to inject plugins DURING .vimrc execution -- this means
@@ -809,6 +826,7 @@ function! ZackBundle(...) abort
     if load_method == 'normal'  " if a:4 is true, go ahead and load the plugin...
       " This is the 'normal' way to load the plugin, using rtp.
       let &rtp = l:bundle_rtp
+      call s:SupportZackBundle(bundle_name, load_method)
     elseif load_method == 'force_ipi'
       " We can force the plugin to load using IPI if we want.
       if s:processing_queued_bundles
@@ -839,6 +857,7 @@ function! ZackBundle(...) abort
           let l:queue_target = [a:1, a:2, a:3, a:4]
         endif
         call add(s:queued_bundles, l:queue_target)
+        call s:SupportZackBundle(bundle_name, load_method)
       endif
     elseif load_method == 'disabled' && !s:processing_queued_bundles
       let l:queue_target = a:000
@@ -937,7 +956,6 @@ if (version >= 703 && has('patch661')) || version > 703
 endif
 
 if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
-  nnoremap <F7> :TlistToggle<CR>
   " taglist.vim options
   let Tlist_Compact_Format=0
   "let Tlist_Auto_Open=1
@@ -947,10 +965,19 @@ if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
   au ZCM_TaglistResize VimResized * call RecheckTaglistOrientationBounds()
   aug END
   call RecheckTaglistOrientationBounds()
+
   " we delay loading of the taglist plugin because it's slow and annoying if you
   " don't have exuberant ctags or the wrong ctags installed (throws errors every
   " time you open a file)
-  call ZackBundle('taglist.vim', 'force_ipi')
+  "call ZackBundle('taglist.vim', 'force_ipi')
+  " use taglisttoo instead now... better integration with eclim
+  call ZackBundle('ervandew/taglisttoo', 'force_ipi')
+
+  if ZackBundleSupported('taglist.vim')
+    nnoremap <F7> :TlistToggle<CR>
+  elseif ZackBundleSupported('taglisttoo')
+    nnoremap <F7> :TlistToo<CR>
+  endif
 endif
 
 call ZackBundle('tpope/vim-scriptease')
