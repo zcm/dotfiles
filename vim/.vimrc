@@ -689,6 +689,38 @@ onoremap <silent> i{ :<C-U>normal vi{<CR>
 onoremap <silent> i} :<C-U>normal vi}<CR>
 onoremap <silent> iB :<C-U>normal viB<CR>
 
+if !RESTRICTED_MODE && has('unix')
+  function! ZCM_Vimclass(openmode, classname)
+    let l:found_file = system('global -a ' . a:classname . ' | xargs')
+    let l:found_file = substitute(l:found_file, '[\x0]', '', 'g')
+    if l:found_file == ''
+      let l:found_file =
+          \ system('ack -l "\bclass ' .  a:classname . '\b" --ignore-file=ext:html,xml')
+      let l:found_file = substitute(l:found_file, '[\x0]', '', 'g')
+      if l:found_file == ''
+        throw 'ZCM_Vimclass: No class with name ' . a:classname . ' found'
+      endif
+    endif
+
+    let l:shortform = fnamemodify(l:found_file, ':~:.')
+    exe a:openmode . ' ' . l:shortform
+  endfunction
+
+  function! ZCM_Vimclass_Complete(ArgLead, CmdLine, CursorPos)
+    let l:complete_command = "global -x '^". a:ArgLead . ".*' | sed -r -e 's/\\s.*$//g'"
+    echom 'debug_com: ' . l:complete_command
+    let l:found_files = system(l:complete_command)
+    echom 'debug1: ('.l:found_files.')'
+    let l:found_files_list = split(l:found_files, '[\x0]')
+    echom 'debug2: ('.join(l:found_files_list, ',').')'
+    return l:found_files_list
+  endfunction
+
+  command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Eclass call ZCM_Vimclass('e', <f-args>)
+  command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Spclass call ZCM_Vimclass('sp', <f-args>)
+  command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Vspclass call ZCM_Vimclass('vsp', <f-args>)
+endif
+
 hi! link TagListFileName VisualNOS
 
 hi! link haxeInterpolated SpecialChar
