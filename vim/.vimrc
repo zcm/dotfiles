@@ -216,7 +216,9 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
     set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-mason
     set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-perl
     set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-ruby
-    set rtp+=/apollo/env/envImprovement/vim/amazon/wiki_browser
+    if !RESTRICTED_MODE
+      set rtp+=/apollo/env/envImprovement/vim/amazon/wiki_browser
+    endif
     "set rtp+=/apollo/env/envImprovement/vim  " <-- evil plugins here
     set rtp+=$VIMRUNTIME
     set rtp+=/apollo/env/envImprovement/vim/amazon/mail-after/after
@@ -1062,7 +1064,9 @@ endif
 
 let g:syntastic_check_on_wq = 0
 
-call ZackBundle('scrooloose/syntastic', 'force_ipi')
+if !RESTRICTED_MODE
+  call ZackBundle('scrooloose/syntastic', 'force_ipi')
+endif
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
   call ZackBundle('jdonaldson/vaxe')
@@ -1388,8 +1392,12 @@ endif
 " End autocommand section
 
 " Set up some magic that lets NeoComplCache and eclim work together
-if isdirectory(s:vimfiles_dir . "/eclim")
-  let g:EclimCompletionMethod='omnifunc'
+if RESTRICTED_MODE
+  let g:EclimDisabled=1
+else
+  if isdirectory(s:vimfiles_dir . "/eclim")
+    let g:EclimCompletionMethod='omnifunc'
+  endif
 endif
 
 
