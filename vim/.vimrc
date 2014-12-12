@@ -708,11 +708,8 @@ if !RESTRICTED_MODE && has('unix')
 
   function! ZCM_Vimclass_Complete(ArgLead, CmdLine, CursorPos)
     let l:complete_command = "global -x '^". a:ArgLead . ".*' | sed -r -e 's/\\s.*$//g'"
-    echom 'debug_com: ' . l:complete_command
     let l:found_files = system(l:complete_command)
-    echom 'debug1: ('.l:found_files.')'
     let l:found_files_list = split(l:found_files, '[\x0]')
-    echom 'debug2: ('.join(l:found_files_list, ',').')'
     return l:found_files_list
   endfunction
 
