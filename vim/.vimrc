@@ -308,6 +308,19 @@ if has("persistent_undo")
   endif
 endif
 
+" Other custom directories -- use non-local paths for temp files if possible
+if has("unix")
+  set dir=~/tmp//,/var/tmp//,/tmp//,.
+elseif has("win32") || has("win64") || has("win16") || has("win95") || has("dos32") || has("dos16")
+  set dir=c:\tmp//,c:\temp//
+  if has("win32") || has("has64")
+    set dir+=$LOCALAPPDATA\Temp//
+  endif
+  set dir+="."
+elseif has("amiga")
+  set dir=t:,.
+endif
+
 if !RESTRICTED_MODE
   function! CheckIsCtagsExuberant()
     let l:is_exuberant = 0
