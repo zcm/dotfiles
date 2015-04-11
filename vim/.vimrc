@@ -1394,6 +1394,10 @@ if has("autocmd")
   au BufNewfile,BufReadPre symmap.test.json sil! setlocal undodir=.
   aug END
 
+  aug zcm_undofile_exclusions
+  au BufNewFile,BufReadPre !.tags sil! setlocal noundofile
+  aug end
+
   au QuickFixCmdPost,BufWinEnter,BufWinLeave *
       \ if &buftype == 'quickfix' | setlocal nonumber | endif
 
