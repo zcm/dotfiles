@@ -1327,6 +1327,8 @@ if has("autocmd")
   au BufNewFile,BufRead *.hx set syn=haxe
   au BufNewFile,BufRead !.tags set syn=javascript
 
+  au BufNewFile,BufRead *.csv setlocal tw=0
+
   if MICROSOFT_CORP_SPECIFIC
     au BufWinEnter,BufNewFile,BufRead *.err set ft=err
     au BufWinEnter,BufNewFile,BufRead *.wrn set ft=wrn
