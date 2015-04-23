@@ -924,6 +924,9 @@ Plugin 'gmarik/Vundle.vim'
 
 " YCM comes first. It's complicated and other plugins check if it's loaded.
 " And yes, there is a section for YCM all to itself.
+" Note (added far after the above): This is actually way more just a section for
+" configuring autocomplete engines in general. This includes YCM,
+" NeoComplCache, and NeoComplete.
 function! CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
   if exists("g:zcm_you_can_complete_me")
     return g:zcm_you_can_complete_me
@@ -966,20 +969,37 @@ if CheckIfYouCanCompleteMe()
   endif
 else
   if version >= 702
-    " If we're not using YCM, we might as well give NeoComplCache a shot.
-    " NOTE: This option is causing the intro message to vanish after starting up.
-    "let g:neocomplcache_enable_at_startup = 1
-    call ZackBundle('Shougo/neocomplcache.vim')
-    " So instead of using the default startup, we'll do it ourselves here.
-    if has("autocmd")
-      aug ZCM_Start_NeoComplCache
-      au ZCM_Start_NeoComplCache VimEnter *
-          \ if exists(":NeoComplCacheEnable") == 2 |
-            \ NeoComplCacheEnable |
-            \ exe 'au! ZCM_Start_NeoComplCache' |
-          \ endif
-      aug END
-    endif
+    " If we have Vim 7.3.885+ with Lua support, then we can actually use the
+    " much faster NeoComplete instead of the older NeoComplCache.
+    if has('lua') && (version >= 703 && has('patch885') || version > 703)
+      call ZackBundle('Shougo/neocomplete.vim')
+      " We're just going to use this startup method again, since it seems that
+      " NeoComplete uses the same CursorHold load method as NeoComplCache.
+      if has("autocmd")
+        aug ZCM_Start_NeoComplete
+        au ZCM_Start_NeoComplete VimEnter *
+            \ if exists(":NeoCompleteEnable") == 2 |
+              \ NeoCompleteEnable |
+              \ exe 'au! ZCM_Start_NeoComplete' |
+            \ endif
+        aug END
+      endif
+    else
+      " If we're not using YCM, we might as well give NeoComplCache a shot.
+      " NOTE: This option is causing the intro message to vanish after starting up.
+      "let g:neocomplcache_enable_at_startup = 1
+      call ZackBundle('Shougo/neocomplcache.vim')
+      " So instead of using the default startup, we'll do it ourselves here.
+      if has("autocmd")
+        aug ZCM_Start_NeoComplCache
+        au ZCM_Start_NeoComplCache VimEnter *
+            \ if exists(":NeoComplCacheEnable") == 2 |
+              \ NeoComplCacheEnable |
+              \ exe 'au! ZCM_Start_NeoComplCache' |
+            \ endif
+        aug END
+      endif
+    end
     " <TAB> completion.
     inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
     inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
@@ -987,8 +1007,8 @@ else
 endif
 
 call ZackBundle('gmarik/ingretu')
-call ZackBundle('xoria256.vim')
-call ZackBundle('altercation/vim-colors-solarized')
+"call ZackBundle('xoria256.vim')
+"call ZackBundle('altercation/vim-colors-solarized')
 call ZackBundle('tpope/vim-vividchalk')
 "call ZackBundle('javacomplete', 'force_ipi')
 
