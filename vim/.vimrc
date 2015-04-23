@@ -33,6 +33,7 @@ if has('vim_starting')
     elseif has("gui_win32")
       sil! set gfn=Consolas
       sil! set gfn=ProggySquareTT:h12
+      sil! set gfn=PragmataPro:h10
     endif
   endif
 
