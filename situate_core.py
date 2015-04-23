@@ -154,9 +154,20 @@ class Operation:
     raise NotImplementedError("process() must be overridden")
 
 
+class MetaOperations:
+  @staticmethod
+  def makedirs(path):
+    try:
+      os.makedirs(os.path.dirname(path))
+    except OSError as e:
+      # Ignore this, we just need to make sure the directory is there.
+      pass
+    return path
+
+
 class OperationSets:
   Unix = {
-      'symlink': lambda x, y: os.symlink(x, y),
+      'symlink': lambda x, y: os.symlink(x, MetaOperations.makedirs(y)),
       'copy': 'cp "%s" "%s"',
       'delete': lambda x, y: OperationSets.shared_delete(y),
   }
