@@ -978,7 +978,7 @@ else
       " NeoComplete uses the same CursorHold load method as NeoComplCache.
       if has("autocmd")
         aug ZCM_Start_NeoComplete
-        au ZCM_Start_NeoComplete VimEnter *
+        au ZCM_Start_NeoComplete VimEnter,GUIEnter *
             \ if exists(":NeoCompleteEnable") == 2 |
               \ NeoCompleteEnable |
               \ exe 'au! ZCM_Start_NeoComplete' |
@@ -1342,6 +1342,11 @@ endif
 if has("autocmd")
   " Disable the audible and visual bells
   au VimEnter * set vb t_vb=
+  " At some point in Vim's recent history, the above was enough to disable the
+  " bells everywhere. However, now as of 7.4.711, this is no longer the case.
+  " The official docs say to use GUIEnter instead of VimEnter, but to maintain
+  " parity with older versions of Vim, I'm leaving the above in as well.
+  au GUIEnter * set eb vb t_vb=
 
   " set custom syntaxes here, before syntax enable
   au BufNewFile,BufRead *.applescript set syn=applescript
