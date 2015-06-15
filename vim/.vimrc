@@ -1513,7 +1513,7 @@ set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
 if AGILYSYS_CORP_SPECIFIC
   set tw=120
 elseif AMAZON_CORP_SPECIFIC
-  set tw=100  " This should probably be longer...
+  set tw=120
 else
   if MICROSOFT_CORP_SPECIFIC != 1
     set tw=80
