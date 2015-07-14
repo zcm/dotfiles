@@ -616,8 +616,8 @@ endif
 
 " Keep search matches in the middle of the window.
 " (stolen from: https://bitbucket.org/sjl/dotfiles/src/8bcaac8a526e0c32b477226a9e394153178e60ca/vim/vimrc?at=default)
-nnoremap n nzzzv
-nnoremap N Nzzzv
+"nnoremap n nzzzv
+"nnoremap N Nzzzv
 
 " NOTE: There are two known issues when using this implementation of block
 " matching in visual and operator-pending modes! These issues are deviations
