@@ -705,7 +705,7 @@ onoremap <silent> i} :<C-U>normal vi}<CR>
 onoremap <silent> iB :<C-U>normal viB<CR>
 
 if !RESTRICTED_MODE && has('unix')
-  function! ZCM_Vimclass(openmode, classname)
+  function! ZCM_WithClassExecute(command, classname, fnamemods)
     let l:found_file = system('global -a ' . a:classname . ' | xargs')
     let l:found_file = substitute(l:found_file, '[\x0]', '', 'g')
     if l:found_file == ''
@@ -717,8 +717,20 @@ if !RESTRICTED_MODE && has('unix')
       endif
     endif
 
-    let l:shortform = fnamemodify(l:found_file, ':~:.')
-    exe a:openmode . ' ' . l:shortform
+    let l:shortform = fnamemodify(l:found_file, a:fnamemods)
+    exe a:command . ' ' . l:shortform
+  endfunction
+
+  function! ZCM_Vimclass(openmode, classname)
+    call ZCM_WithClassExecute(a:openmode, a:classname, ':~:.')
+  endfunction
+
+  function! ZCM_Jumpto(...)
+    if len(a:000) == 0
+      exe 'cd ' . expand('%:p:h')
+    elseif len(a:000) == 1
+      call ZCM_WithClassExecute('cd', a:classname, ':~:.:h')
+    endif
   endfunction
 
   function! ZCM_Vimclass_Complete(ArgLead, CmdLine, CursorPos)
@@ -731,6 +743,7 @@ if !RESTRICTED_MODE && has('unix')
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Eclass call ZCM_Vimclass('e', <f-args>)
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Spclass call ZCM_Vimclass('sp', <f-args>)
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Vspclass call ZCM_Vimclass('vsp', <f-args>)
+  command! -nargs=? -complete=customlist,ZCM_Vimclass_Complete Jumpto call ZCM_Jumpto(<f-args>)
 endif
 
 hi! link TagListFileName VisualNOS
