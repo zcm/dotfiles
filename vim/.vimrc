@@ -527,22 +527,6 @@ if !RESTRICTED_MODE
   endfunction
 endif
 
-function! ZCM_GetVisualSelection()
-  " Why is this not a built-in VimScript function?
-  " Stolen from here: http://stackoverflow.com/questions/1533565/how-to-get-visually-selected-text-in-vimscript
-  let [lnum1, col1] = getpos("'<")[1:2]
-  let [lnum2, col2] = getpos("'>")[1:2]
-  " this is a bug fix from me: when you first start vim, there is no selection
-  " and this logic fails because col1 and col2 are both 0 (only true on start)
-  if col1 == 0 || col2 == 0
-    return ""
-  endif
-  let lines = getline(lnum1, lnum2)
-  let lines[-1] = lines[-1][: col2 - (&selection == 'inclusive' ? 1 : 2)]
-  let lines[0] = lines[0][col1 - 1:]
-  return join(lines, "\n")
-endfunction
-
 " This section should be used for custom mappings and personal editor settings,
 " before we start taking changes from our environment (e.g. Google).
 
@@ -618,91 +602,6 @@ endif
 " (stolen from: https://bitbucket.org/sjl/dotfiles/src/8bcaac8a526e0c32b477226a9e394153178e60ca/vim/vimrc?at=default)
 "nnoremap n nzzzv
 "nnoremap N Nzzzv
-
-" NOTE: There are two known issues when using this implementation of block
-" matching in visual and operator-pending modes! These issues are deviations
-" (albeit minor ones) from Vim's default behavior when using these mappings.
-"
-"   1. Trying to select a visual block using 'vab' or the like when there is
-"      none on the current line drops you to normal mode
-"
-"      New behavior in this case: Return to normal mode
-"      Vim's behavior in this case: Stay in visual mode
-"
-"   2. Any command that accepts a motion in operator-pending mode and would, on
-"      success, drop you into insert mode (such as normal mode c) drops you into
-"      insert mode regardless of if there is a valid selection on the current
-"      line or not
-"
-"      New behavior in this case: Drop into insert mode at cursor position
-"      Vim's behavior in this case: Cancel operation and return to normal mode
-
-function! ZCM_Visual_PerformBlockMatchingMagic(left_char, right_char)
-  exe "silent! normal! va".a:left_char."\<Esc>"
-  let l:selection = ZCM_GetVisualSelection()
-  exe "silent! normal! \<Esc>va".a:left_char
-  if strlen(l:selection) <= 1
-    let [lnum, lcol] = getpos('.')[1:2]
-    exe "silent! normal! \<Esc>f".a:left_char
-    let l:char = getline('.')[col('.')-1]
-    if char == a:left_char
-      silent! normal! %
-      let l:char = getline('.')[col('.')-1]
-      if l:char == a:right_char
-        silent! normal! %v%
-      else
-        silent! call cursor(lnum, lcol)
-      endif
-    endif
-  endif
-endfunction
-
-function! ZCM_Visual_PerformInnerBlockMatchingMagic(left_char, right_char)
-  call ZCM_Visual_PerformBlockMatchingMagic(a:left_char, a:right_char)
-  exe "silent! normal! \<Esc>"
-  let l:char = getline('.')[col('.')-1]
-  if char == a:right_char
-    silent! normal! %lvh%h
-  endif
-endfunction
-
-" Delicious, delicious custom text objects. Operator-pending mode FOR THE WIN.
-
-" replaces a( motion with a way better version
-vnoremap <silent> a( :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
-vnoremap <silent> a) :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
-vnoremap <silent> ab :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('(', ')')<CR>
-onoremap <silent> a( :<C-U>normal vab<CR>
-onoremap <silent> a) :<C-U>normal vab<CR>
-onoremap <silent> ab :<C-U>normal vab<CR>
-" replaces i( motion with a way better version
-vnoremap <silent> i( :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
-vnoremap <silent> i) :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
-vnoremap <silent> ib :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('(', ')')<CR>
-onoremap <silent> i( :<C-U>normal vib<CR>
-onoremap <silent> i) :<C-U>normal vib<CR>
-onoremap <silent> ib :<C-U>normal vib<CR>
-" same as above for a[ a] a{ a} i[ i] i{ i} motions
-vnoremap <silent> a[ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
-vnoremap <silent> a] :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('[', ']')<CR>
-onoremap <silent> a[ :<C-U>normal va[<CR>
-onoremap <silent> a] :<C-U>normal va]<CR>
-vnoremap <silent> i[ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
-vnoremap <silent> i] :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('[', ']')<CR>
-onoremap <silent> i[ :<C-U>normal vi[<CR>
-onoremap <silent> i] :<C-U>normal vi]<CR>
-vnoremap <silent> a{ :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
-vnoremap <silent> a} :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
-vnoremap <silent> aB :<C-U>call ZCM_Visual_PerformBlockMatchingMagic('{', '}')<CR>
-onoremap <silent> a{ :<C-U>normal va{<CR>
-onoremap <silent> a} :<C-U>normal va}<CR>
-onoremap <silent> aB :<C-U>normal vaB<CR>
-vnoremap <silent> i{ :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
-vnoremap <silent> i} :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
-vnoremap <silent> iB :<C-U>call ZCM_Visual_PerformInnerBlockMatchingMagic('{', '}')<CR>
-onoremap <silent> i{ :<C-U>normal vi{<CR>
-onoremap <silent> i} :<C-U>normal vi}<CR>
-onoremap <silent> iB :<C-U>normal viB<CR>
 
 if !RESTRICTED_MODE && has('unix')
   function! ZCM_WithClassExecute(command, classname, fnamemods)
@@ -1021,6 +920,7 @@ else
   endif
 endif
 
+call ZackBundle('dremelofdeath/vim-block-magic')
 call ZackBundle('gmarik/ingretu')
 "call ZackBundle('xoria256.vim')
 "call ZackBundle('altercation/vim-colors-solarized')
