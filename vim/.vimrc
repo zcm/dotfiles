@@ -3,12 +3,8 @@ if has('vim_starting')
   set showcmd
 
   " detect if we're in restricted mode before doing anything else
-  let RESTRICTED_MODE=0
-  try
-    sil call system("echo ...")
-  catch /^Vim\%((\a\+)\)\=:E145/
-    let RESTRICTED_MODE=1
-  endtry
+  sil! call writefile([], '')
+  let RESTRICTED_MODE = (v:errmsg =~# '^E145:')
 
   if has("persistent_undo")
     set undofile
