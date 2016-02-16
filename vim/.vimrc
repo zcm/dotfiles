@@ -1,5 +1,22 @@
 if has('vim_starting')
-  set nocompatible
+  if !has('nvim')
+    set nocompatible
+
+    if !has("win32") && match($TERM, "screen") != -1
+      set term=xterm-256color
+      let g:using_gnu_screen = 1
+    else
+      let g:using_gnu_screen = 0
+    endif
+
+    " Override vim's terminal detection for GNOME Terminal (when not still running
+    " in a GNU screen).
+    if !has("gui_running") && has("unix")
+          \ && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
+      set t_Co=256
+    endif
+  endif
+
   set showcmd
 
   " detect if we're in restricted mode before doing anything else
@@ -33,51 +50,6 @@ if has('vim_starting')
       sil! set gfn=PragmataPro:h10
     endif
   endif
-
-  if !has("win32") && match($TERM, "screen") != -1
-    set term=xterm-256color
-    let g:using_gnu_screen = 1
-  else
-    let g:using_gnu_screen = 0
-  endif
-
-  " Override vim's terminal detection for GNOME Terminal (when not still running
-  " in a GNU screen).
-  if !has("gui_running") && has("unix")
-        \ && $COLORTERM == 'gnome-terminal' && match($TERM, "screen") != -1
-    set t_Co=256
-  endif
-endif
-
-let g:dock_hidden = 0
-
-" on Mac OS X, gets the computer name (not the host name)
-if (!RESTRICTED_MODE && (has("macunix") || has("gui_macvim")))
-  let g:maccomputernamestring = ""
-  function! MacGetComputerName()
-    if g:maccomputernamestring == ""
-      let g:maccomputernamestring = system("scutil --get ComputerName")
-    endif
-    return strpart(g:maccomputernamestring, 0, strlen(g:maccomputernamestring)-1)
-  endfunction
-
-  " on Mac OS X, toggle hiding the dock
-  function! MacToggleDockHiding()
-    " this is to make sure that the dock is unhidden on exit aug zcm_dock_hiding
-    if has("autocmd") if g:dock_hidden == 0 let g:dock_hidden = 1
-        au zcm_dock_hiding VimLeave * call MacToggleDockHiding()
-        aug END
-      else
-        let g:dock_hidden = 0
-        " this should make sure that the dock isn't touched
-        " if it's been manually unhidden
-        aug zcm_dock_hiding
-        au! zcm_dock_hiding
-        aug END
-      endif
-    endif
-    call system("osascript -e 'tell app \"System Events\" to keystroke \"d\" using {command down, option down}'")
-  endfunction
 endif
 
 " these two functions allow the user to toggle between
@@ -86,6 +58,7 @@ function! EnableDoxygenComments()
   let b:zcm_doxified = 1
   set syn+=.doxygen
 endfunction
+
 function! DisableDoxygenComments()
   let b:zcm_doxified = 0
   set syn-=.doxygen
@@ -101,26 +74,6 @@ function! ToggleDoxygenComments()
   else
     call DisableDoxygenComments()
   endif
-endfunction
-
-" function for fullscreen maximize, at least on a 1280x800 Macintosh desktop
-" NOTE: you must use a GUIEnter autocommand to make this happen on startup
-function! FullScreenMaximize_Harmony()
-  if has("macunix") && g:dock_hidden == 0
-    call MacToggleDockHiding()
-  endif
-  winp 1 0
-  set lines=59
-  set columns=210
-endfunction
-
-function! FullScreenMaximize_Bliss()
-  if has("macunix") && g:dock_hidden == 0
-    call MacToggleDockHiding()
-  endif
-  winp 0 0
-  set lines=90
-  set columns=317
 endfunction
 
 function! NotepadWindowSize(widthfactor)
@@ -490,39 +443,6 @@ if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
   endfunction
 endif
 
-" functions to make the window just like ma used to make
-
-" function to make the window in the original starting position
-if !RESTRICTED_MODE
-  function! OriginalWindowPosition()
-    if MacGetComputerName() == "Euphoria"
-      winp 351 187
-    elseif MacGetComputerName() == "Bliss"
-      winp 461 262
-    elseif MacGetComputerName() == "Harmony"
-      winp 1 0
-    else
-      winp 5 25
-    endif
-  endfunction
-
-  " function to make the window the original size
-  function! OriginalWindowSize()
-    if has("macunix") && g:dock_hidden == 0
-      call MacToggleDockHiding()
-    endif
-    winp 5 25
-    set lines=50
-    set columns=160
-  endfunction
-
-  " function to do both of the above
-  function! OriginalWindow()
-    call OriginalWindowSize()
-    call OriginalWindowPosition()
-  endfunction
-endif
-
 " This section should be used for custom mappings and personal editor settings,
 " before we start taking changes from our environment (e.g. Google).
 
@@ -593,11 +513,6 @@ else
   nnoremap => :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)+&sw*2)<CR>
   nnoremap =< :<C-U>exe line(".").",".(v:count1-1+line("."))."left ".string(indent(line(".")-1)-&sw*2)<CR>
 endif
-
-" Keep search matches in the middle of the window.
-" (stolen from: https://bitbucket.org/sjl/dotfiles/src/8bcaac8a526e0c32b477226a9e394153178e60ca/vim/vimrc?at=default)
-"nnoremap n nzzzv
-"nnoremap N Nzzzv
 
 if !RESTRICTED_MODE && has('unix')
   function! ZCM_WithClassExecute(command, classname, fnamemods)
@@ -832,50 +747,9 @@ Plugin 'gmarik/Vundle.vim'
 
 " other bundles...
 
-" YCM comes first. It's complicated and other plugins check if it's loaded.
-" And yes, there is a section for YCM all to itself.
-" Note (added far after the above): This is actually way more just a section for
-" configuring autocomplete engines in general. This includes YCM,
-" NeoComplCache, and NeoComplete.
-function! CheckIfYouCanCompleteMe()   " You need Vim 7.3.584 or better for YCM...
-  if exists("g:zcm_you_can_complete_me")
-    return g:zcm_you_can_complete_me
-  endif
-  " This is a per-machine override.
-  " Touch the file this looks for to force disable YCM.
-  if filereadable(s:stdhome . "/.vimrc_disable_ycm")
-    let g:zcm_you_can_complete_me = 0
-    return g:zcm_you_can_complete_me
-  endif
-  " YCM is *so* annoying to set up, and it prints annoying messages if you don't
-  " have it properly configured. Only enable it if requested from now on.
-  if filereadable(s:stdhome . "/.vimrc_maybe_enable_ycm")
-    let l:right_version = (version >= 703 && has('patch584')) || version > 703
-    " On windows you have to build this yourself, bitch
-    let l:base_ycm_python = s:vimfiles_dir . "/ipi/YouCompleteMe/python/"
-    let l:windows_ok = has('win32') || has('win64')
-    let l:windows_ok = l:windows_ok
-        \ && filereadable(l:base_ycm_python . "libclang.dll")
-    let l:windows_ok = l:windows_ok
-        \ && filereadable(l:base_ycm_python . "ycm_core.pyd")
-    " screw mac for now...
-    " it takes WAY too much work to get YCM working on non-Linux things...
-    let g:zcm_you_can_complete_me =
-        \ l:right_version && !has('macunix') && (l:windows_ok || has('unix'))
-  else
-    let g:zcm_you_can_complete_me = 0
-  endif
-  return g:zcm_you_can_complete_me
-endfunction
-
-let PLAN_TO_USE_YCM_OMNIFUNC = 0
-
-if CheckIfYouCanCompleteMe()
-  let PLAN_TO_USE_YCM_OMNIFUNC = 1
-  let g:ycm_filetype_specific_completion_to_disable = {'javascript': 1}
-  if !GOOGLE_CORP_SPECIFIC
-    " This should now be a Glug module while at Google
-    call ZackBundle('Valloric/YouCompleteMe', 'youcompleteme.vim')
+if has('nvim')
+  if has('python3')
+    call ZackBundle('Shougo/deoplete.vim')
   endif
 else
   if version >= 702
@@ -1047,19 +921,6 @@ if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
   call ZackBundle('jeroenbourgois/vim-actionscript')
 endif
 
-"call ZackBundle('tlib')
-"call ZackBundle('MarcWeber/vim-addon-views')
-"call ZackBundle('MarcWeber/vim-addon-mw-utils')
-"call ZackBundle('MarcWeber/vim-addon-actions')
-"call ZackBundle('MarcWeber/vim-addon-goto-thing-at-cursor')
-"call ZackBundle('MarcWeber/vim-addon-background-cmd')
-"call ZackBundle('MarcWeber/vim-addon-completion')
-"call ZackBundle('MarcWeber/vim-addon-swfmill')
-"call ZackBundle('MarcWeber/vim-haxe-syntax')
-"call ZackBundle('MarcWeber/vim-addon-mw-utils')
-"call ZackBundle('MarcWeber/vim-addon-actions')
-"call ZackBundle('MarcWeber/vim-haxe')
-
 " Don't touch this...
 call ProcessQueuedZackBundles()
 
@@ -1176,26 +1037,6 @@ if has("gui_running")
       endif
     else
       call NotepadWindowSize(1)
-    endif
-  elseif has("macunix")
-    if !RESTRICTED_MODE
-      let __computername = MacGetComputerName()
-      if __computername == "Euphoria"
-        winp 351 187
-      elseif __computername == "Bliss"
-        winp 461 262
-      elseif __computername == "Harmony"
-        "winp 1 0
-        " we need to use an autocommand to make this magic happen because
-        " Vim hates it when we go out of desktop bounds before it loads the
-        " freaking window
-        "aug zcm_windows_maximize
-        "au zcm_windows_maximize GUIEnter * set lines=59
-        "au zcm_windows_maximize GUIEnter * set columns=210
-        "au zcm_windows_maximize GUIEnter * call FullScreenMaximize_Harmony()
-        "aug END
-      elseif __computername == "Tim Menzies’s Mac mini"
-      endif
     endif
   elseif has("gui_win32")
     " screw it, on windows we just maximize
@@ -1347,7 +1188,7 @@ if has("autocmd")
       \ endif
 
   if GOOGLE_CORP_SPECIFIC
-    if !PLAN_TO_USE_YCM_OMNIFUNC && exists('*GtagOmniCompletion')
+    if exists('*GtagOmniCompletion')
       aug ZCM_GoogleGtagsOmniCompletion
       au BufEnter * set omnifunc=GtagOmniCompletion
       aug END
