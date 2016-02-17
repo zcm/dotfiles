@@ -576,193 +576,28 @@ if GOOGLE_CORP_SPECIFIC && filereadable("/usr/share/vim/google/google.vim")
   let GOOGLE_HAS_GOOGLE_VIM=1
 endif
 
-" Fire up Pathogen and IPI so we can chainload package managers.
-call pathogen#infect()
-call ipi#inspect()
-
-" Time to kickstart Vundle using IPI... god what a hack
-sil IP Vundle.vim
-
-filetype off " do NOT start vundle with this on!
-call vundle#begin(s:vimfiles_dir . "/ipi")
-
-function! IsBundleInstalled(bundle_name)
-  return IsBundleInstalledWithAutoload(a:bundle_name, a:bundle_name)
+function IsPlugged(name)
+  return has_key(g:plugs, a:name) && isdirectory(g:plugs[a:name].dir)
 endfunction
 
-function! IsBundleInstalledWithAutoload(bundle_name, autoload_target)
-  return IsBundleInstalledWithSomeFile(a:bundle_name, "autoload/" . a:autoload_target)
-endfunction
-
-function! IsBundleInstalledWithSomeFile(bundle_name, target)
-  return filereadable(s:vimfiles_dir . "/ipi/" . a:bundle_name . "/".  a:target)
-endfunction
-
-function! ZackBundleGetGitUserOrUrl(items)
-  let github_user_or_git_url = ''
-  let current = 0
-  for item in a:items
-    if current == len(a:items) - 1
-      break
-    elseif current != 0
-      let github_user_or_git_url = github_user_or_git_url . '/'
-    endif
-    let github_user_or_git_url = github_user_or_git_url . item
-    let current = current + 1
-  endfor
-  return github_user_or_git_url
-endfunction
-
-let s:queued_bundles = []
-let s:supported_bundles = {}
-let s:processing_queued_bundles = 0
-
-function! ProcessQueuedZackBundles() abort
-  let s:processing_queued_bundles = 1
-  for each in s:queued_bundles
-    call ZackBundle(each[0], each[1], each[2], each[3])
-  endfor
-endfunction
-
-function! ZackBundleNameEscape(bundle_name) abort
-  let l:current = substitute(a:bundle_name, "\.", "xOx", "g")
-  let l:current = substitute(l:current, "-", "xDx", "g")
-  let l:current = substitute(l:current, "_", "xUx", "g")
-  return l:current
-endfunction
-
-function! s:SupportZackBundle(bundle_name, load_method) abort
-  let l:escaped = ZackBundleNameEscape(a:bundle_name)
-  exe 'let s:supported_bundles.'.l:escaped.'="'.a:load_method.'"'
-endfunction
-
-function! ZackBundleSupported(bundle_name) abort
-  return has_key(s:supported_bundles, ZackBundleNameEscape(a:bundle_name))
-endfunction
-
-" NOTE: use force_ipi to inject plugins DURING .vimrc execution -- this means
-" you can check for existence of plugin functions and do feature detection. If
-" you don't do this, use RTP instead
-
-function! ZackBundle(...) abort
-  if len(a:000) == 1
-    if stridx(a:1, '/') == -1
-      call ZackBundle(a:1, '')
-    else
-      let items = split(a:1, '/')
-      let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
-      call ZackBundle(github_user_or_git_url, items[len(items)-1], 0)
-    endif
-  elseif len(a:000) == 2
-    let a2_is_load_method = (string(a:2) != string(0) && (a:2 == 'normal' || a:2 == 'force_ipi' || a:2 == 'disable'))
-    if stridx(a:1, '/') != -1 && (stridx(a:2, ".vim") != -1 || a2_is_load_method)
-      let items = split(a:1, '/')
-      let github_user_or_git_url = ZackBundleGetGitUserOrUrl(items)
-      call ZackBundle(github_user_or_git_url, items[len(items)-1], a:2)
-    elseif stridx(a:1, '/') == -1 && (stridx(a:2, ".vim") != -1 || a2_is_load_method)
-      call ZackBundle(a:1, '', a:2)
-    else
-      call ZackBundle(a:1, a:2, 0)
-    endif
-  elseif len(a:000) == 3
-    let a3_is_load_method = (string(a:3) != string(0) && (a:3 == 'normal' || a:3 == 'force_ipi' || a:3 == 'disable'))
-    if a3_is_load_method
-      call ZackBundle(a:1, a:2, 0, a:3)
-    else
-      call ZackBundle(a:1, a:2, a:3, 'normal')
-    endif
-  elseif len(a:000) == 4
-    " Do real work now
-    let bundle_target = a:1 . (a:2 != '' ? '/' . a:2 : '')
-    let bundle_name = a:2 == '' ? a:1 : a:2
-    let bundle_name_parts = split(a:2, '.')
-    let load_method = a:4
-    if stridx(a:3, ".vim") != -1
-      " If we have a load condition, we have to force IPI loading method
-      let load_method = 'force_ipi'
-    endif
-    if len(bundle_name_parts) > 0
-      let bundle_name = bundle_name_parts[0]
-    endif
-    if load_method == 'normal' || s:processing_queued_bundles
-      let l:rtp_save = &rtp
-      Plugin bundle_target
-      let l:bundle_rtp = &rtp
-      let &rtp = l:rtp_save
-    endif
-    " If we don't end up loading the plugin here, the user can do it manually
-    " later with :IP <bundle name>.
-    if load_method == 'normal'  " if a:4 is true, go ahead and load the plugin...
-      " This is the 'normal' way to load the plugin, using rtp.
-      let &rtp = l:bundle_rtp
-      call s:SupportZackBundle(bundle_name, load_method)
-    elseif load_method == 'force_ipi'
-      " We can force the plugin to load using IPI if we want.
-      if s:processing_queued_bundles
-        if stridx(a:3, ".vim") != -1
-          if stridx(a:3, '/') == -1
-            if IsBundleInstalledWithAutoload(bundle_name, a:3)
-              execute 'sil IP ' . bundle_name
-            endif
-          else
-            if IsBundleInstalledWithSomeFile(bundle_name, a:3)
-              execute 'sil IP ' . bundle_name
-            endif
-          endif
-        else
-          if isdirectory(s:vimfiles_dir . "/ipi/" . bundle_name)
-            execute 'sil IP ' . bundle_name
-          endif
-        endif
-      else
-        " We need to queue force_ipi and disabled bundles so that they don't get
-        " regenerated by RTP and so that they load last. This prevents them
-        " from loading twice. To process these, call ProcessQueuedZackBundles().
-        let l:queue_target = a:000
-        if version <= 700
-          " Vim 7.0 will segfault when calling a method with a:000 because it
-          " does not properly handle the implicit conversion of an ARGV to a
-          " list. So we will, on these versions, unpack it into a list first.
-          let l:queue_target = [a:1, a:2, a:3, a:4]
-        endif
-        call add(s:queued_bundles, l:queue_target)
-        call s:SupportZackBundle(bundle_name, load_method)
-      endif
-    elseif load_method == 'disabled' && !s:processing_queued_bundles
-      let l:queue_target = a:000
-      if version <= 700
-        " Same bug in Vim 7.0 as above.
-        let l:queue_target = [a:1, a:2, a:3, a:4]
-      endif
-      call add(s:queued_bundles, l:queue_target)
-    endif
-  endif
-  " I guess we can just ignore if we give it 0 or >4 args
-endfunction
-
-" Vundle bundles go here (and other packages too, say, Glug/Pathogen)
-
-" absolutely completely required
-Plugin 'gmarik/Vundle.vim'
-
-" other bundles...
+call plug#begin(s:vimfiles_dir . '/plugged')
 
 if has('nvim')
   if has('python3')
-    call ZackBundle('Shougo/deoplete.vim')
+    Plug 'Shougo/deoplete.vim'
   endif
 else
   if version >= 702
     " If we have Vim 7.3.885+ with Lua support, then we can actually use the
     " much faster NeoComplete instead of the older NeoComplCache.
     if has('lua') && (version >= 703 && has('patch885') || version > 703)
-      call ZackBundle('Shougo/neocomplete.vim')
+      Plug 'Shougo/neocomplete.vim'
       " We're just going to use this startup method again, since it seems that
       " NeoComplete uses the same CursorHold load method as NeoComplCache.
-      if has("autocmd")
+      if has('autocmd')
         aug ZCM_Start_NeoComplete
         au ZCM_Start_NeoComplete VimEnter,GUIEnter *
-            \ if exists(":NeoCompleteEnable") == 2 |
+            \ if IsPlugged('neocomplete') |
               \ NeoCompleteEnable |
               \ exe 'au! ZCM_Start_NeoComplete' |
             \ endif
@@ -772,12 +607,12 @@ else
       " If we're not using YCM, we might as well give NeoComplCache a shot.
       " NOTE: This option is causing the intro message to vanish after starting up.
       "let g:neocomplcache_enable_at_startup = 1
-      call ZackBundle('Shougo/neocomplcache.vim')
+      Plug 'Shougo/neocomplcache.vim'
       " So instead of using the default startup, we'll do it ourselves here.
       if has("autocmd")
         aug ZCM_Start_NeoComplCache
         au ZCM_Start_NeoComplCache VimEnter *
-            \ if exists(":NeoComplCacheEnable") == 2 |
+            \ if IsPlugged('neocomplcache') |
               \ NeoComplCacheEnable |
               \ exe 'au! ZCM_Start_NeoComplCache' |
             \ endif
@@ -790,17 +625,14 @@ else
   endif
 endif
 
-call ZackBundle('dremelofdeath/vim-block-magic')
-call ZackBundle('gmarik/ingretu')
-"call ZackBundle('xoria256.vim')
-"call ZackBundle('altercation/vim-colors-solarized')
-call ZackBundle('tpope/vim-vividchalk')
-"call ZackBundle('javacomplete', 'force_ipi')
+Plug 'dremelofdeath/vim-block-magic'
+Plug 'gmarik/ingretu'
+Plug 'tpope/vim-vividchalk'
 
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
   " supporting this in the future. Or something. --zack
-  "call ZackBundle('Lokaltog/powerline')
+  "Plug 'Lokaltog/powerline'
   "set rtp+=s:vimfiles_dir . "/ipi/powerline/powerline/bindings/vim
 endif
 
@@ -818,26 +650,21 @@ if (!RESTRICTED_MODE && CheckIsCtagsExuberant())
   " we delay loading of the taglist plugin because it's slow and annoying if you
   " don't have exuberant ctags or the wrong ctags installed (throws errors every
   " time you open a file)
-  "call ZackBundle('taglist.vim', 'force_ipi')
+  "Plug 'taglist.vim'
   " use taglisttoo instead now... better integration with eclim
-  call ZackBundle('ervandew/taglisttoo', 'force_ipi')
-
-  if ZackBundleSupported('taglist.vim')
-    nnoremap <F7> :TlistToggle<CR>
-  elseif ZackBundleSupported('taglisttoo')
-    nnoremap <F7> :TlistToo<CR>
-  endif
+  Plug 'ervandew/taglisttoo'
+  nnoremap <F7> :TlistToo<CR>
 endif
 
-call ZackBundle('tpope/vim-scriptease')
-call ZackBundle('tpope/vim-dispatch')
-call ZackBundle('tpope/vim-fugitive', 'force_ipi')
-call ZackBundle('tpope/vim-speeddating')
+Plug 'tpope/vim-scriptease'
+Plug 'tpope/vim-dispatch'
+Plug 'tpope/vim-fugitive'
+Plug 'tpope/vim-speeddating'
 
-call ZackBundle('dag/vim-fish')
+Plug 'dag/vim-fish'
 
 if has("python")
-  call ZackBundle('Valloric/MatchTagAlways')
+  Plug 'Valloric/MatchTagAlways'
 endif
 
 if GOOGLE_CORP_SPECIFIC
@@ -912,17 +739,16 @@ endif
 let g:syntastic_check_on_wq = 0
 
 if !RESTRICTED_MODE
-  call ZackBundle('scrooloose/syntastic', 'force_ipi')
+  Plug 'scrooloose/syntastic'
 endif
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
-  call ZackBundle('jdonaldson/vaxe')
-  "call ZackBundle('dremelofdeath/vaxe')
-  call ZackBundle('jeroenbourgois/vim-actionscript')
+  Plug 'jdonaldson/vaxe'
+  "Plug 'dremelofdeath/vaxe'
+  Plug 'jeroenbourgois/vim-actionscript'
 endif
 
-" Don't touch this...
-call ProcessQueuedZackBundles()
+call plug#end()
 
 " Glug packages...
 if GOOGLE_CORP_SPECIFIC && GOOGLE_HAS_GOOGLE_VIM
@@ -955,7 +781,6 @@ endif
 
 " End bundle section
 
-call vundle#end()
 filetype plugin indent on
 
 " Color and window settings section
@@ -989,7 +814,11 @@ if !RESTRICTED_MODE
     " vividchalk looks absolutely terrible in cmd.exe.
     let s:f_vividchalk = GetColorschemeFile("vim-vividchalk", "vividchalk.vim")
     if filereadable(s:f_vividchalk) && (!has("unix") || $TERM != "linux")
-      sil! colo vividchalk
+      try
+        sil colo vividchalk
+      catch /^Vim\%((\a\+)\)\=:E185/
+        colo elflord
+      endtry
     else
       colo elflord
     endif
@@ -1195,12 +1024,12 @@ if has("autocmd")
   " This appears to be a bug in Vim -- submodule functions are not visible to
   " exists() until after the first time they are called, which is weird.
   " Silently attempt an invalid call in order to workaround this bug...
-  sil! call javacomplete#Complete()
-  if exists('*javacomplete#Complete')
-    aug ZCM_UseJavaCompleteWhenAvailable
-    au Filetype java setlocal omnifunc=javacomplete#Complete
-    aug END
-  endif
+  "sil! call javacomplete#Complete()
+  "if exists('*javacomplete#Complete')
+    "aug ZCM_UseJavaCompleteWhenAvailable
+    "au Filetype java setlocal omnifunc=javacomplete#Complete
+    "aug END
+  "endif
 endif
 
 " End autocommand section
@@ -1213,7 +1042,6 @@ else
     let g:EclimCompletionMethod='omnifunc'
   endif
 endif
-
 
 if !RESTRICTED_MODE
   syntax enable
@@ -1241,10 +1069,10 @@ endif
 " always show the status line
 set ls=2
 set stl=%<%f\ #%{changenr()}
-if exists('*fugitive#statusline()')
+if IsPlugged('vim-fugitive')
   set stl+=\ %{fugitive#statusline()}
 endif
-if exists('*SyntasticStatuslineFlag')
+if IsPlugged('syntastic')
   set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
 endif
 set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
