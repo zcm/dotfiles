@@ -785,14 +785,6 @@ filetype plugin indent on
 
 " Color and window settings section
 if !RESTRICTED_MODE
-  function! GetColorschemeFile(...) abort
-    if len(a:000) == 1
-      return s:vimfiles_dir . "/colors/" . a:1
-    elseif len(a:000) == 2
-      return s:vimfiles_dir . "/ipi/" . a:1 . "/colors/" . a:2
-    endif
-  endfunction
-
   if version >= 702
     " There are performance problems in versions <7.2 because successive calls
     " to :match result in a memory leak. This is fixed in newer versions with a
@@ -805,6 +797,10 @@ if !RESTRICTED_MODE
         match ExtraWhitespace /\s\+$/
         au InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
         au InsertLeave * match ExtraWhitespace /\s\+$/
+        " If you always want all tab characters highlighted as well:
+        "match ExtraWhitespace /\(\s\+$\|\t\+\)/
+        "au InsertEnter * match ExtraWhitespace /\(\s\+\%#\@<!$\|\t\+\)/
+        "au InsertLeave * match ExtraWhitespace /\(\s\+$\|\t\+\)/
         au BufWinLeave * call clearmatches()
       endif
     endif
@@ -812,8 +808,7 @@ if !RESTRICTED_MODE
 
   if !(has("win32") || has("win64")) || has("gui_running")
     " vividchalk looks absolutely terrible in cmd.exe.
-    let s:f_vividchalk = GetColorschemeFile("vim-vividchalk", "vividchalk.vim")
-    if filereadable(s:f_vividchalk) && (!has("unix") || $TERM != "linux")
+    if IsPlugged('vim-vividchalk') && (!has("unix") || $TERM != "linux")
       try
         sil colo vividchalk
       catch /^Vim\%((\a\+)\)\=:E185/
