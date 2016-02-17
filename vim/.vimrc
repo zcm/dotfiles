@@ -740,6 +740,11 @@ let g:syntastic_check_on_wq = 0
 
 if !RESTRICTED_MODE
   Plug 'scrooloose/syntastic'
+
+  if !GOOGLE_CORP_SPECIFIC
+    " Google has their own settings for this.
+    Plug 'dremelofdeath/vim-highlight-extra-whitespace'
+  endif
 endif
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
@@ -785,27 +790,6 @@ filetype plugin indent on
 
 " Color and window settings section
 if !RESTRICTED_MODE
-  if version >= 702
-    " There are performance problems in versions <7.2 because successive calls
-    " to :match result in a memory leak. This is fixed in newer versions with a
-    " call to clearmatches() (which is unavailable in <7.2).
-    if !GOOGLE_CORP_SPECIFIC
-      " Google has their own settings for this.
-      if has("autocmd")
-        highlight ExtraWhitespace ctermbg=red guibg=red
-        au ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
-        match ExtraWhitespace /\s\+$/
-        au InsertEnter * match ExtraWhitespace /\s\+\%#\@<!$/
-        au InsertLeave * match ExtraWhitespace /\s\+$/
-        " If you always want all tab characters highlighted as well:
-        "match ExtraWhitespace /\(\s\+$\|\t\+\)/
-        "au InsertEnter * match ExtraWhitespace /\(\s\+\%#\@<!$\|\t\+\)/
-        "au InsertLeave * match ExtraWhitespace /\(\s\+$\|\t\+\)/
-        au BufWinLeave * call clearmatches()
-      endif
-    endif
-  endif
-
   if !(has("win32") || has("win64")) || has("gui_running")
     " vividchalk looks absolutely terrible in cmd.exe.
     if IsPlugged('vim-vividchalk') && (!has("unix") || $TERM != "linux")
