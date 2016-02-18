@@ -806,6 +806,13 @@ if !RESTRICTED_MODE
   endif
 endif
 
+set cursorline
+set cursorcolumn
+
+" Remove the underline from any cursor lines.
+hi CursorLine term=NONE cterm=NONE
+au ColorScheme * hi CursorLine term=NONE cterm=NONE
+
 " window settings for gvim
 " please only put GUI based settings in this section...
 " stuff that doesn't require the GUI to be running should go
