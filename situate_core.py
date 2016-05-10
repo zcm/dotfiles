@@ -203,7 +203,11 @@ class OperationSets:
       command = 'fsutil reparsepoint query "%s"'
       try:
         output = subprocess.check_output(command % target)
-        return output.find('Symbolic Link') != -1
+        try:
+          return output.find('Symbolic Link') != -1
+        except TypeError:
+          # This is the Python 3 case, since find() requires bytes instead
+          return output.find(b'Symbolic Link') != -1
       except subprocess.CalledProcessError:
         return False
     return False
@@ -397,7 +401,7 @@ class SituationFile:
     with open(os.path.join(args.target_path, args.situation_file), 'r') as f:
       situation_json = json.load(f)
       self.last_symmap = json.loads(
-          base64.b64decode(situation_json['last_symmap']))
+          base64.b64decode(situation_json['last_symmap']).decode('utf-8'))
       self.complete = situation_json['complete']
       self.skipped = situation_json['skipped']
       self.failed = situation_json['failed']
@@ -408,7 +412,8 @@ class SituationFile:
     with open(filename, 'w') as f:
       situation_json = {
           'last_symmap':
-              base64.b64encode(json.dumps(self.last_symmap).encode('ascii')),
+              base64.b64encode(
+                json.dumps(self.last_symmap).encode('ascii')).decode('utf-8'),
           'complete': self.complete,
           'skipped': self.skipped,
           'failed': self.failed,
