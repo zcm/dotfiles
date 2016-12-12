@@ -41,6 +41,7 @@ if has('vim_starting')
   if has("gui_running")
     if has("gui_macvim")
       sil! set gfn=ProggySquare:h11
+      sil! set gfn=PragmataPro:h13
     elseif has("gui_gtk")
       sil! set gfn=ProggySquareTT\ 12
       sil! set gfn=PragmataPro\ 10
@@ -136,7 +137,25 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
     return l:domain_match
   endfunction
 
-  if(has("unix") && substitute($HOSTNAME, "[a-zA-Z0-9_\\-]\\+\\.", "", "") == "desktop.amazon.com")
+  function! CheckRunningAtAmazon()
+    let l:domain_match = 0
+    if has("unix")
+      let l:hostname = $HOSTNAME
+
+      if (l:hostname == "")
+        let l:hostname = hostname()
+      endif
+
+      let l:pattern = "[a-zA-Z0-9_\\-]\\+\\."
+      let l:domain = substitute(l:hostname, l:pattern, "", "")
+
+      let l:domain_match =
+        \ l:domain == "desktop.amazon.com" || l:domain == "ant.amazon.com"
+    endif
+    return l:domain_match
+  endfunction
+
+  if(CheckRunningAtAmazon())
     let AMAZON_CORP_SPECIFIC=1
     " Just take the runtime hooks. (Edit: No, don't even do this. Avoid loading
     " these ancient plugins AT ALL COSTS.)
@@ -839,6 +858,8 @@ if has("gui_running")
         set columns=154
         winp 0 0
       endif
+    elseif AMAZON_CORP_SPECIFIC
+      call BaseNotepadWindowSize(130, 1)
     else
       call NotepadWindowSize(1)
     endif
