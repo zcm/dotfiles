@@ -504,15 +504,9 @@ unlet s:cpo_save
 " can't find their target.
 set cpo+=E
 
-let g:EclimJavaSearchSingleResult='edit'
-
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
-nnoremap <F3> :JavaSearchContext<CR>
-nnoremap <F5> :ProjectRefresh<CR>
 " Cannot map S-F5 in terminals without fast keycode support
-nnoremap <F4> :ProjectRefreshAll<CR>
-nnoremap <S-F5> :ProjectRefreshAll<CR>
 inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F10> "=strftime("%x %X %Z")<CR>P
 inoremap <S-F10> <C-R>=strftime("%b %d, %Y")<CR>
@@ -1040,15 +1034,6 @@ if has("autocmd")
 endif
 
 " End autocommand section
-
-" Set up some magic that lets NeoComplCache and eclim work together
-if RESTRICTED_MODE
-  let g:EclimDisabled=1
-else
-  if isdirectory(s:vimfiles_dir . "/eclim")
-    let g:EclimCompletionMethod='omnifunc'
-  endif
-endif
 
 if !RESTRICTED_MODE
   syntax enable
