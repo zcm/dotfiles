@@ -597,7 +597,7 @@ call plug#begin(s:vimfiles_dir . '/plugged')
 
 if has('nvim')
   if has('python3')
-    Plug 'Shougo/deoplete.vim'
+    Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
   endif
 else
   if version >= 702
@@ -633,14 +633,15 @@ else
       endif
     end
     " <TAB> completion.
-    inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
-    inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
+    "inoremap <expr><TAB>  pumvisible() ? "\<C-n>" : "\<TAB>"
+    "inoremap <expr><S-TAB>  pumvisible() ? "\<C-p>" : "\<S-TAB>"
   endif
 endif
 
 Plug 'dremelofdeath/vim-block-magic'
 Plug 'gmarik/ingretu'
 Plug 'tpope/vim-vividchalk'
+Plug 'vim-scripts/GlobalOptions', { 'on' : ['SetBufferLocal', 'SetWindowLocal'] }
 
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
@@ -752,7 +753,9 @@ endif
 let g:syntastic_check_on_wq = 0
 
 if !RESTRICTED_MODE
-  Plug 'scrooloose/syntastic'
+  if !AMAZON_CORP_SPECIFIC
+    Plug 'scrooloose/syntastic'
+  endif
 
   if !GOOGLE_CORP_SPECIFIC
     " Google has their own settings for this.
