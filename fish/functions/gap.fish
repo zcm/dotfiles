@@ -1,7 +1,6 @@
 function gap --description "Run 'git pull' in each git repository under the current directory."
-  for each in (ls -d */)
-    pushd $each
-    if_in_git_tree_do git pull $argv
-    popd
+  _ga pull $argv
+  if command -v global
+    global -u ^ /dev/null
   end
 end
