@@ -53,6 +53,78 @@ if has('vim_starting')
   endif
 endif
 
+let g:zcm_feature_explanations = {}
+let g:zcm_feature_explain_key_order = []
+
+function! ExplainFeature(isavailable, type, name, reason)
+  let l:featurename = "Unknown feature type "
+
+  if a:type ==? "au"
+    let l:featurename = "Autocommand "
+  elseif a:type ==? "function"
+    let l:featurename = "Function "
+  elseif a:type ==? "plugin"
+    let l:featurename = "Plugin "
+  endif
+
+  let l:featurename = l:featurename . a:name
+
+  if a:isavailable
+    let l:featurename = l:featurename . " was loaded because "
+  else
+    let l:featurename = l:featurename . " is missing because "
+  end
+
+  if has_key(g:zcm_feature_explanations, l:featurename)
+    call add(g:zcm_feature_explanations[l:featurename], a:reason)
+  else
+    let g:zcm_feature_explanations[l:featurename] = [a:reason]
+    call add(g:zcm_feature_explain_key_order, l:featurename)
+  endif
+endfunction
+
+function! DisplayExplanations()
+  if len(keys(g:zcm_feature_explanations)) == 0
+    echom "There are no explanations."
+    return
+  endif
+
+  for key in g:zcm_feature_explain_key_order
+    let l:reasons = g:zcm_feature_explanations[key]
+    if len(l:reasons) == 1
+      echom key . l:reasons[0] . "."
+    elseif len(l:reasons) > 1
+      let l:first = 1
+      let l:finalreason = ""
+      let l:countdown = len(l:reasons)
+      for each in l:reasons
+        let l:countdown = l:countdown - 1
+        if l:first
+          let l:finalreason = each
+          let l:first = 0
+        else
+          if l:countdown == 0
+            let l:finalreason = l:finalreason . ", and " . each
+          else
+            let l:finalreason = l:finalreason . ", " . each
+          endif
+        endif
+      endfor
+      echom key . l:finalreason . "."
+    endif
+  endfor
+endfunction
+
+function! ExplainPythonFeature(isavailable, type, name)
+  if a:isavailable
+    call ExplainFeature(1, a:type, a:name,
+          \ "either vim feature 'python' or 'python3' is available")
+  else
+    call ExplainFeature(0, a:type, a:name,
+          \ "neither vim feature 'python' nor 'python3' is available")
+  endif
+endfunction
+
 " these two functions allow the user to toggle between
 " standard comments and Doxygen comments
 function! EnableDoxygenComments()
@@ -643,6 +715,13 @@ Plug 'gmarik/ingretu'
 Plug 'tpope/vim-vividchalk'
 Plug 'vim-scripts/GlobalOptions', { 'on' : ['SetBufferLocal', 'SetWindowLocal'] }
 
+if has('python') || has('python3')
+  Plug 'artur-shaik/vim-javacomplete2', { 'for' : ['java'] }
+else
+  call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
+        \ "neither vim feature 'python' nor 'python3' is available")
+endif
+
 if (version >= 703 && has('patch661')) || version > 703
   " These look awful on the terminal with unpatched fonts. Maybe I'll get to
   " supporting this in the future. Or something. --zack
@@ -1025,15 +1104,27 @@ if has("autocmd")
   else
     au BufNewFile,BufRead *.java compiler javac
   endif
-  " This appears to be a bug in Vim -- submodule functions are not visible to
-  " exists() until after the first time they are called, which is weird.
-  " Silently attempt an invalid call in order to workaround this bug...
-  "sil! call javacomplete#Complete()
-  "if exists('*javacomplete#Complete')
-    "aug ZCM_UseJavaCompleteWhenAvailable
-    "au Filetype java setlocal omnifunc=javacomplete#Complete
-    "aug END
-  "endif
+
+  if IsPlugged('vim-javacomplete2')
+    if has('python') || has('python3')
+      aug ZCM_UseJavaCompleteWhenAvailable
+        au Filetype java
+              \ if exists('*javacomplete#Complete') |
+                \ setlocal omnifunc=javacomplete#Complete |
+              \ endif
+      aug END
+    else
+      call ExplainFeature(0, "au", "ZCM_UseJavaCompleteWhenAvailable",
+            \ "neither vim feature 'python' nor 'python3' is available")
+    endif
+  else
+    call ExplainFeature(0, "au", "ZCM_UseJavaCompleteWhenAvailable",
+          \ "plugin 'vim-javacomplete2' is not plugged")
+    if !has('python') && !has('python3')
+      call ExplainFeature(0, "au", "ZCM_UseJavaCompleteWhenAvailable",
+            \ "neither vim feature 'python' nor 'python3' is available")
+    endif
+  endif
 endif
 
 " End autocommand section
