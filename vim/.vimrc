@@ -732,8 +732,7 @@ else
           \ "the 'java' binary is not executable (probably not installed)")
   endif
   if !(has('python') || has('python3'))
-    call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
-          \ "neither vim feature 'python' nor 'python3' is available")
+    call ExplainPythonFeature(0, 'plugin', 'vim-javacomplete2')
   endif
 endif
 
@@ -771,8 +770,11 @@ Plug 'tpope/vim-speeddating'
 
 Plug 'dag/vim-fish'
 
-if has("python")
-  Plug 'Valloric/MatchTagAlways'
+if has('python') || has('python3')
+  Plug 'Valloric/MatchTagAlways', { 'for' :
+        \ ['jinja', 'xhtml', 'xml', 'html', 'django', 'htmldjango', 'eruby'] }
+else
+  call ExplainPythonFeature(0, 'plugin', 'MatchTagAlways')
 endif
 
 if GOOGLE_CORP_SPECIFIC
