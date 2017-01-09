@@ -38,6 +38,10 @@ if has('vim_starting')
     set rtp+=~/vimfiles,~/vimfiles/after
   endif
 
+  let g:zcm_has_jobs = has('job') && (v:version > 704 || v:version == 704
+        \ && (has('unix') && has('patch1274')
+        \ || (has('win32') || has('win64')) && has('patch1530')))
+
   if has("gui_running")
     if has("gui_macvim")
       sil! set gfn=ProggySquare:h11
@@ -455,8 +459,13 @@ function! MaybeUpdateGlobal()
     let l:current = expand('%:p:h')
     let l:file = SearchParentDirectoriesForFileFrom("GTAGS", l:last, l:current)
     if l:file != -1
-      let l:dir = fnamemodify(l:file, ":h")
-      sil! call system("pushd ". shellescape(l:dir)." && global -u && popd")
+      let l:dir = shellescape(fnamemodify(l:file, ":h"))
+      if g:zcm_has_jobs
+        sil! call job_start(
+              \ ['/bin/sh', '-c', 'cd ' . l:dir . ' && global -u'])
+      else
+        sil! call system("pushd " . l:dir . " && global -u && popd")
+      endif
     endif
   endif
 endfunction
