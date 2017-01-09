@@ -724,11 +724,17 @@ Plug 'gmarik/ingretu'
 Plug 'tpope/vim-vividchalk'
 Plug 'vim-scripts/GlobalOptions', { 'on' : ['SetBufferLocal', 'SetWindowLocal'] }
 
-if has('python') || has('python3')
+if executable('java') && (has('python') || has('python3'))
   Plug 'artur-shaik/vim-javacomplete2', { 'for' : ['java'] }
 else
-  call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
-        \ "neither vim feature 'python' nor 'python3' is available")
+  if (!executable('java'))
+    call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
+          \ "the 'java' binary is not executable (probably not installed)")
+  endif
+  if !(has('python') || has('python3'))
+    call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
+          \ "neither vim feature 'python' nor 'python3' is available")
+  endif
 endif
 
 if (version >= 703 && has('patch661')) || version > 703
