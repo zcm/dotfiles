@@ -137,15 +137,15 @@ function __brazil_complete
 end
 
 function __brazil_complete_arg_vars
-  __brazil_complete $argv[1] -c brazil -A -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and not __brazil_last_any $argv[4..-1]" -a "$argv[4..-1]"
+  __brazil_complete $argv[1] -c brazil -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and not __brazil_last_any $argv[4..-1]" -a "$argv[4..-1]"
 end
 
 function __brazil_complete_arg_vars_skipfirst
-  __brazil_complete $argv[1] -c brazil -A -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and not __brazil_last_any $argv[5..-1]" -a "$argv[4..-1]"
+  __brazil_complete $argv[1] -c brazil -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and not __brazil_last_any $argv[5..-1]" -a "$argv[4..-1]"
 end
 
 function __brazil_complete_arg_vars_single
-  __brazil_complete $argv[1] -c brazil -A -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and __brazil_ex $argv[4..-1]; and not __brazil_last_any $argv[4..-1]" -a "$argv[4]"
+  __brazil_complete $argv[1] -c brazil -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and __brazil_ex $argv[4..-1]; and not __brazil_last_any $argv[4..-1]" -a "$argv[4]"
 end
 
 function __brazil_complete_help1
@@ -170,7 +170,6 @@ function __brazil_complete_action_opt_compile
   set short
   set arglist
   set desc
-  set has_A 1
   set has_f 1
   set has_x 1
   set has_r 1
@@ -221,8 +220,6 @@ function __brazil_complete_action_opt_compile
         set token 2
       case +desc
         set token 3
-      case +A
-        set has_A 0
       case +f
         set has_f 0
       case +x
@@ -329,9 +326,6 @@ function __brazil_complete_action_opt_compile
   if [ $seen_short -eq 0 ]
     set params $params -o $short
   end
-  if [ $has_A -eq 0 ]
-    set params $params -A
-  end
   if [ $has_f -eq 0 ]
     set params $params -f
   end
@@ -384,7 +378,7 @@ function __brazil_completions
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'pb' --description 'Alias for "packagebuilder"'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'majorversion' --description 'Modify package major versions'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'mv' --description 'Alias for "majorversion"'
-  __brazil_complete $compile -c brazil -A -x -n '__brazil_nc1' -a 'help' --description 'Help using brazil'
+  __brazil_complete $compile -c brazil -x -n '__brazil_nc1' -a 'help' --description 'Help using brazil'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'branch' --description 'Create and delete branches'
 
   for cmd in workspace ws versionset vs s3Binary s3 packagebuilder pb package pkg majorversion mv branch
