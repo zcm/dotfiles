@@ -69,6 +69,8 @@ function! ExplainFeature(isavailable, type, name, reason)
     let l:featurename = "Function "
   elseif a:type ==? "plugin"
     let l:featurename = "Plugin "
+  elseif a:type ==? "generic"
+    let l:featurename = ""
   endif
 
   let l:featurename = l:featurename . a:name
@@ -826,8 +828,8 @@ else
           let s:use_default_zack_checks = 1
         endif
       else
-        echom "Amazon's CheckStyle checks are unavailable. Using the defaults instead."
-        echom "Pull the CheckstyleAntBuildLogic package into your workspace and try again."
+      call ExplainFeature(0, 'generic', 'Amazon Checkstyle',
+            \ 'the CheckstyleAntBuildLogic package is not in your workspace')
         let s:use_default_zack_checks = 1
       endif
     elseif AGILYSYS_CORP_SPECIFIC
