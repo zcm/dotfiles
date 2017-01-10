@@ -686,7 +686,7 @@ else
   if version >= 702
     " If we have Vim 7.3.885+ with Lua support, then we can actually use the
     " much faster NeoComplete instead of the older NeoComplCache.
-    if has('lua') && (version >= 703 && has('patch885') || version > 703)
+    if has('lua') && (version == 703 && has('patch885') || version > 703)
       Plug 'Shougo/neocomplete.vim'
       " We're just going to use this startup method again, since it seems that
       " NeoComplete uses the same CursorHold load method as NeoComplCache.
@@ -863,9 +863,13 @@ if !RESTRICTED_MODE
 endif
 
 if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
-  Plug 'jdonaldson/vaxe'
-  "Plug 'dremelofdeath/vaxe'
-  Plug 'jeroenbourgois/vim-actionscript'
+  if has('python') || has('python3')
+    Plug 'jdonaldson/vaxe', { 'for' : ['haxe', 'hss', 'hxml'] }
+  else
+    call ExplainPythonFeature(0, 'plugin', 'vaxe')
+  end
+
+  Plug 'jeroenbourgois/vim-actionscript', { 'for' : ['actionscript'] }
 endif
 
 call plug#end()
