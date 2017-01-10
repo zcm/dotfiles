@@ -725,7 +725,8 @@ Plug 'tpope/vim-vividchalk'
 Plug 'vim-scripts/GlobalOptions', { 'on' : ['SetBufferLocal', 'SetWindowLocal'] }
 
 if executable('java') && (has('python') || has('python3'))
-  Plug 'artur-shaik/vim-javacomplete2', { 'for' : ['java'] }
+  " Plug 'artur-shaik/vim-javacomplete2', { 'for' : ['java'] }
+  Plug 'dremelofdeath/vim-javacomplete2', { 'for' : ['java'] }
 else
   if (!executable('java'))
     call ExplainFeature(0, 'plugin', 'vim-javacomplete2',
@@ -768,7 +769,7 @@ Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-speeddating'
 
-Plug 'dag/vim-fish'
+Plug 'dag/vim-fish', { 'for' : ['fish'] }
 
 if has('python') || has('python3')
   Plug 'Valloric/MatchTagAlways', { 'for' :
