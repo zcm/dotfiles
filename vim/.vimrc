@@ -589,6 +589,7 @@ set cpo+=E
 
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
+nnoremap <C-C><C-S> :let @/=''<CR>
 " Cannot map S-F5 in terminals without fast keycode support
 inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F10> "=strftime("%x %X %Z")<CR>P
