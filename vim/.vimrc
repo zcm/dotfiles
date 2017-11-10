@@ -1,3 +1,8 @@
+" vim.tiny hardcodes if to always fail. if we can't trust that if 1 works, we
+" should skip most of this file because it just prints a ton of error messages.
+" We will still have some universal settings towards the end, past this endif.
+if 1  " skip most of the config for non-working if-statements (i.e., vim.tiny)
+
 if has('vim_starting')
   if !has('nvim')
     set nocompatible
@@ -551,11 +556,6 @@ endif
 " netrw Explore sort options...
 let g:netrw_sort_sequence="[\\/]$,\\.h$,\\.c$,\\.cpp$,\\.java$,\\.class$,\\.py$,\\.pyc$,\\.[a-np-z]$,Makefile,Doxyfile,*,\\.info$,\\.swp$,\\.o$,\\.obj$,\\.bak$"
 
-set backspace=2
-
-set number
-set autoindent
-
 let s:cpo_save=&cpo
 set cpo&vim
 map! <xHome> <Home>
@@ -905,7 +905,13 @@ endif
 
 " End bundle section
 
-filetype plugin indent on
+" Stop ignoring config for vim.tiny
+endif  " if 1
+
+" According to structs.h, filetype is only available with FEAT_AUTOCMD
+if has("autocmd")
+  filetype plugin indent on
+endif
 
 " Color and window settings section
 if !RESTRICTED_MODE
@@ -929,8 +935,10 @@ set cursorline
 set cursorcolumn
 
 " Remove the underline from any cursor lines.
-hi CursorLine term=NONE cterm=NONE
-au ColorScheme * hi CursorLine term=NONE cterm=NONE
+if has("autocmd")
+  hi CursorLine term=NONE cterm=NONE
+  au ColorScheme * hi CursorLine term=NONE cterm=NONE
+endif
 
 " window settings for gvim
 " please only put GUI based settings in this section...
@@ -1166,14 +1174,19 @@ set report=1
 
 set ut=10
 
+set backspace=2
+
+set number
+set autoindent
+
 " ts and sw need to be the same for << and >> to work correctly!
+set ts=2
+set sw=2
+
 if AMAZON_CORP_SPECIFIC
   set ts=4
   set sw=4
   au BufNewFile,BufRead *.fish setlocal ts=2 | setlocal sw=2
-else
-  set ts=2
-  set sw=2
 endif
 
 " always show the status line
@@ -1208,6 +1221,6 @@ if GOOGLE_CORP_SPECIFIC
   set nomodeline " this is to absolutely stop security vulnerabilities with nocompatible
 endif
 
-let g:ZM_vimrc_did_complete_load=1
+if 1 | let g:ZM_vimrc_did_complete_load=1 | endif
 
 " vim:ai:et:ts=2:sw=2:tw=80
