@@ -1179,6 +1179,8 @@ set backspace=2
 set number
 set autoindent
 
+set encoding=utf-8
+
 " ts and sw need to be the same for << and >> to work correctly!
 set ts=2
 set sw=2
