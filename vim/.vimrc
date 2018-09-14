@@ -589,6 +589,7 @@ set cpo+=E
 
 " custom mappings
 nmap <C-C><C-N> :set invnumber<CR>
+nnoremap <C-C><C-S> :let @/=''<CR>
 " Cannot map S-F5 in terminals without fast keycode support
 inoremap <F10> <C-R>=strftime("%x %X %Z")<CR>
 nnoremap <F10> "=strftime("%x %X %Z")<CR>P
@@ -648,6 +649,7 @@ if !RESTRICTED_MODE && has('unix')
 
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Eclass call ZCM_Vimclass('e', <f-args>)
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Spclass call ZCM_Vimclass('sp', <f-args>)
+  command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Vsclass call ZCM_Vimclass('vs', <f-args>)
   command! -nargs=1 -complete=customlist,ZCM_Vimclass_Complete Vspclass call ZCM_Vimclass('vsp', <f-args>)
   command! -nargs=? -complete=customlist,ZCM_Vimclass_Complete Jumpto call ZCM_Jumpto(<f-args>)
 endif
