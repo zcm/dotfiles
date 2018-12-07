@@ -183,3 +183,5 @@ function jumpto {
 }
 
 complete -o nospace -F _complete_code_token jumpto
+
+export PATH=$HOME/.toolbox/bin:$PATH

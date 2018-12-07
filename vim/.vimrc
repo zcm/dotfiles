@@ -775,9 +775,17 @@ Plug 'tpope/vim-speeddating'
 
 Plug 'dag/vim-fish', { 'for' : ['fish'] }
 
+Plug 'leafgarland/typescript-vim'
+Plug 'Quramy/tsuquyomi', { 'for' : ['typescript'] }
+Plug 'Quramy/vim-js-pretty-template', { 'on': [ 'JsPreTmpl' ], 'for' : ['dart', 'javascript, typescript'] }
+
+if has('autocmd')
+  au FileType dart,javascript,typescript JsPreTmpl
+endif
+
 if has('python') || has('python3')
   Plug 'Valloric/MatchTagAlways', { 'for' :
-        \ ['jinja', 'xhtml', 'xml', 'html', 'django', 'htmldjango', 'eruby'] }
+        \ ['jinja', 'xhtml', 'xml', 'html', 'django', 'htmldjango', 'eruby', 'dart', 'javascript', 'typescript'] }
 else
   call ExplainPythonFeature(0, 'plugin', 'MatchTagAlways')
 endif
