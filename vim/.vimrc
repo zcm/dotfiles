@@ -1212,7 +1212,8 @@ endif
 if IsPlugged('syntastic')
   set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
 endif
-set stl+=\ %h%m%r%=%-14.(%l,%c%V%)\ %P
+set stl+=\ %h%m%r[%{&fenc==\"\"?&enc:&fenc}%{(exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\"}]
+set stl+=%=%-14.(%l,%c%V%)\ %P
 
 if AGILYSYS_CORP_SPECIFIC
   set tw=120
