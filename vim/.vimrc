@@ -777,10 +777,12 @@ Plug 'dag/vim-fish', { 'for' : ['fish'] }
 
 Plug 'leafgarland/typescript-vim'
 Plug 'Quramy/tsuquyomi', { 'for' : ['typescript'] }
-Plug 'Quramy/vim-js-pretty-template', { 'on': [ 'JsPreTmpl' ], 'for' : ['dart', 'javascript, typescript'] }
+Plug 'Quramy/vim-js-pretty-template', { 'on': [ 'JsPreTmpl' ], 'for' : ['dart', 'javascript', 'typescript'] }
 
 if has('autocmd')
-  au FileType dart,javascript,typescript JsPreTmpl
+  aug ZCM_JsPrettyTemplate
+    au FileType dart,javascript,typescript JsPreTmpl
+  aug END
 endif
 
 if has('python') || has('python3')
