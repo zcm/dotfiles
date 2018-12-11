@@ -785,6 +785,8 @@ if has('autocmd')
   aug END
 endif
 
+let g:syntastic_typescript_checkers = ['tsuquyomi']
+
 if has('python') || has('python3')
   Plug 'Valloric/MatchTagAlways', { 'for' :
         \ ['jinja', 'xhtml', 'xml', 'html', 'django', 'htmldjango', 'eruby', 'dart', 'javascript', 'typescript'] }
@@ -1212,7 +1214,7 @@ endif
 if IsPlugged('syntastic')
   set stl+=\ %#warningmsg#%{SyntasticStatuslineFlag()}%*
 endif
-set stl+=\ %h%m%r[%{&fenc==\"\"?&enc:&fenc}%{(exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\"}]
+set stl+=\ [%{&fenc==\"\"?&enc:&fenc}%{(exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\"}]%h%m%r
 set stl+=%=%-14.(%l,%c%V%)\ %P
 
 if AGILYSYS_CORP_SPECIFIC
