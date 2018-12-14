@@ -523,7 +523,8 @@ function! CSAddOrCleanupAndRetry(tagsfile)
   return 0
 endfunction
 
-function! FindAndAddCScope()
+function! FindAndAddCScopeInternal()
+  let g:zcm_gtags_known=0
   if executable("gtags-cscope")
     " Not to be confused with Google's Gtags, I assure you.
     set csprg=gtags-cscope
@@ -568,28 +569,30 @@ function! FindAndAddCScope()
   endif
 endfunction
 
+function! FindAndAddCScope()
+  set nocsverb
+  let l:r = FindAndAddCScopeInternal()
+  set csverb
+  return l:r
+endfunction
+
 if !GOOGLE_CORP_SPECIFIC
   if has("cscope")
     set cscopetag
-    set nocsverb
-    let g:zcm_gtags_known=0
-    try
-      call FindAndAddCScope()
-    catch /.*/
-      " This is likely a tempfile name collision caused by /tmp pollution, e.g.
-      "   E609: Cscope error: cscope: Could not create private temp dir /tmp/cscope.261
-      " Note: The perror() message
-      "   cs_read_prompt EOF: Error 0
-      " currently (2004-02-20) hides the more-informative message
-      if has('unix')
-        call FindAndAddCScope()
-      endif
-    endtry
-    set csverb
-    " Try to clean up the leftover cscope temp files on exit to avoid pollution
-    if has('unix') && exists('*getpid') && has('autocmd')
+    call FindAndAddCScope()
+    " Try to clean up the leftover cscope temp files on exit to avoid pollution.
+    " Only needed for versions earlier than 7.1.289, where this bug is present.
+    if v:version < 701
+          \ || v:version == 701
+            \ && (!has('patch282') || has('gui_running') && !has('patch288'))
+          \ && has('unix') && has('autocmd')
       aug ZCM_CScopeCleanup
-        au ZCM_CScopeCleanup VimLeave * sil! call system('rm -f /tmp/cscope.' . getpid())
+        if exists('*getpid')
+          au ZCM_CScopeCleanup VimLeave * sil! call system('rm -f /tmp/cscope.' . (getpid() + 1))
+        else
+          " getpid() was implemented in Vim 7.1; we might not have it so just kill everything
+          au ZCM_CScopeCleanup VimLeave * sil! call system('rm -f /tmp/cscope.*')
+        endif
       aug END
     endif
   endif
