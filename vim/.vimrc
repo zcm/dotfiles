@@ -1032,12 +1032,16 @@ if !RESTRICTED_MODE
 endif
 
 set cursorline
-set cursorcolumn
 
-" Remove the underline from any cursor lines.
+" Remove the underline from any cursor lines and set its color.
 if has("autocmd")
-  hi CursorLine term=NONE cterm=NONE
-  au ColorScheme * hi CursorLine term=NONE cterm=NONE
+  if &t_Co == 256
+    hi CursorLine term=NONE cterm=NONE ctermbg=232
+    au ColorScheme * hi CursorLine term=NONE cterm=NONE ctermbg=232
+  else
+    hi CursorLine term=NONE cterm=NONE
+    au ColorScheme * hi CursorLine term=NONE cterm=NONE
+  end
 endif
 
 " window settings for gvim
