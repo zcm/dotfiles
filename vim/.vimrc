@@ -477,38 +477,121 @@ function! MaybeUpdateGlobal()
   endif
 endfunction
 
+function! CleanupCScopeTempFiles()
+  for i in range(0, 9)
+    " The number of files here can be larger than the argument list limit
+    call system('rm -f /tmp/cscope.' . i . '*')
+  endfor
+endfunction
+
+function! CSAddOrCleanupAndRetry(tagsfile)
+  if filereadable(a:tagsfile)
+    try
+      exe 'cs add' a:tagsfile
+      return 1
+    catch /.*/
+      echohl WarningMsg
+      echom 'There was an issue when connecting to the cscope file ' . a:tagsfile . '.'
+      echom 'This is probably caused by a cscope tempfile collision (pollution).'
+      echom 'Cleaning up your cscope tempfiles now and proceeding with normal vim startup...'
+      echohl None
+      " Example error:
+      "   E609: Cscope error: cscope: Could not create private temp dir /tmp/cscope.261
+      " Note: The perror() message
+      "   cs_read_prompt EOF: <whatever text here>
+      " currently (2004-02-20) hides the more-informative message
+      if has('unix')
+        call CleanupCScopeTempFiles()
+        try
+          exe 'cs add' a:tagsfile
+          return 1
+        catch /.*/
+          echohl ErrorMsg
+          echom 'Failed to clean up the cscope temp files. The exception that occurred was:'
+          echohl None
+          echom v:exception
+          return 0
+        endtry
+      else
+        echohl ErrorMsg
+        echom 'Could not clean up the cscope temp files because you are using a non-Unix operating system!'
+        echohl None
+        return 0
+      endif
+    endtry
+  endif
+  return 0
+endfunction
+
+function! FindAndAddCScope()
+  if executable("gtags-cscope")
+    " Not to be confused with Google's Gtags, I assure you.
+    set csprg=gtags-cscope
+    let l:c = CSAddOrCleanupAndRetry("GTAGS")
+    if l:c
+      let g:zcm_gtags_known=1
+    else
+      " If the index isn't in the current directory, it could be in a parent.
+      let s:parent_gtags_file = SearchParentDirectoriesForFile("GTAGS")
+      if s:parent_gtags_file != -1
+        let l:c = CSAddOrCleanupAndRetry(s:parent_gtags_file)
+        if l:c
+          let g:zcm_gtags_known=1
+        endif
+      endif
+    endif
+    if has('autocmd') && executable('global')
+      aug ZCM_AutoGlobalUpdate
+        au ZCM_AutoGlobalUpdate BufWritePost * sil! call MaybeUpdateGlobal()
+      aug END
+    endif
+  else
+    try
+      if filereadable("cscope.out")
+        try
+          cs add cscope.out
+        catch /.*/
+          call CleanupCScopeTempFiles()
+          cs add cscope.out
+          return
+        endtry
+      elseif $CSCOPE_DB != ""
+        try
+          cs add $CSCOPE_DB
+        catch /.*/
+          call CleanupCScopeTempFiles()
+          cs add $CSCOPE_DB
+          return
+        endtry
+      endif
+    endtry
+  endif
+endfunction
+
 if !GOOGLE_CORP_SPECIFIC
   if has("cscope")
     set cscopetag
     set nocsverb
     let g:zcm_gtags_known=0
-    if executable("gtags-cscope")
-      " Not to be confused with Google's Gtags, I assure you.
-      set csprg=gtags-cscope
-      if filereadable("GTAGS")
-        cs add GTAGS
-        let g:zcm_gtags_known=1
-      else
-        " If the index isn't in the current directory, it could be in a parent.
-        let s:parent_gtags_file = SearchParentDirectoriesForFile("GTAGS")
-        if s:parent_gtags_file != -1 && filereadable(s:parent_gtags_file)
-          exe "cs add " . s:parent_gtags_file
-          let g:zcm_gtags_known=1
-        endif
+    try
+      call FindAndAddCScope()
+    catch /.*/
+      " This is likely a tempfile name collision caused by /tmp pollution, e.g.
+      "   E609: Cscope error: cscope: Could not create private temp dir /tmp/cscope.261
+      " Note: The perror() message
+      "   cs_read_prompt EOF: Error 0
+      " currently (2004-02-20) hides the more-informative message
+      if has('unix')
+        call FindAndAddCScope()
       endif
-      if has('autocmd') && executable('global')
-        aug ZCM_AutoGlobalUpdate
-          au ZCM_AutoGlobalUpdate BufWritePost * sil! call MaybeUpdateGlobal()
-        aug END
-      endif
-    else
-      if filereadable("cscope.out")
-        cs add cscope.out
-      elseif $CSCOPE_DB != ""
-        cs add $CSCOPE_DB
-      endif
-    endif
+    endtry
     set csverb
+    " Try to clean up the leftover cscope temp files on exit to avoid pollution
+    if has('unix') && exists('*getpid') && has('autocmd')
+      aug ZCM_CScopeCleanup
+        au ZCM_CScopeCleanup VimLeave * sil! call system('rm -f /tmp/cscope.' . getpid())
+      aug END
+    endif
   endif
 endif
 
