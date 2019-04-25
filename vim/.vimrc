@@ -1015,17 +1015,18 @@ endif
 
 " Color and window settings section
 if !RESTRICTED_MODE
-  if !(has("win32") || has("win64")) || has("gui_running")
+  if IsPlugged('vim-vividchalk') && (has("gui_running")
+        \ || !(has("win32") || has("win64") || has("unix"))
+        \ || has("unix") && $TERM != "linux"
+        \ )
     " vividchalk looks absolutely terrible in cmd.exe.
-    if IsPlugged('vim-vividchalk') && (!has("unix") || $TERM != "linux")
-      try
-        sil colo vividchalk
-      catch /^Vim\%((\a\+)\)\=:E185/
-        colo elflord
-      endtry
-    else
+    " $TERM != "linux" stops vividchalk running in a console tty (looks bad),
+    " however in some contexts this is the TERM variable when the GUI is running
+    try
+      sil colo vividchalk
+    catch /^Vim\%((\a\+)\)\=:E185/
       colo elflord
-    endif
+    endtry
   else
     colo elflord
   endif
