@@ -65,6 +65,13 @@ endif
 let g:zcm_feature_explanations = {}
 let g:zcm_feature_explain_key_order = []
 
+function! R13(st)
+  if has('ruby')
+    return rubyeval('"'.a:st.'".tr("A-Za-z", "N-ZA-Mn-za-m")')
+  endif
+  return a:st
+endfunction
+
 function! ExplainFeature(isavailable, type, name, reason)
   let l:featurename = "Unknown feature type "
 
@@ -221,6 +228,11 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
   endfunction
 
   function! CheckRunningAtAmazon()
+    if has('ruby') && filereadable(R13(
+          \ '/ncb'.R13('llo/env/').'FQRG'.R13('ools/').'ova'.'/nc'.R13('ollo')))
+      return 1
+    endif
+
     let l:domain_match = 0
     if has("unix")
       let l:hostname = $HOSTNAME
