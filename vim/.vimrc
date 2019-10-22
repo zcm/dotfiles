@@ -873,6 +873,8 @@ Plug 'tpope/vim-speeddating'
 
 Plug 'dag/vim-fish', { 'for' : ['fish'] }
 
+Plug 'mustache/vim-mustache-handlebars'
+
 Plug 'leafgarland/typescript-vim'
 Plug 'Quramy/tsuquyomi', { 'for' : ['typescript'] }
 Plug 'Quramy/vim-js-pretty-template', { 'on': [ 'JsPreTmpl' ], 'for' : ['dart', 'javascript', 'typescript'] }
