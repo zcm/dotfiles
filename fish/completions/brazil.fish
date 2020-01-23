@@ -372,37 +372,47 @@ function __brazil_completions
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'ws' --description 'Alias for "workspace"'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'versionset' --description 'Manipulate version sets'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'vs' --description 'Alias for "versionset"'
-  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3Binary' --description 'S3Binary system for large files'
-  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3' --description 'Alias for "s3Binary"'
+  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3binary' --description 'S3Binary system for large files'  # V2
+  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3' --description 'Alias for "s3binary"'  # V2
+  #__brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3Binary' --description 'S3Binary system for large files'  # V1
+  #__brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 's3' --description 'Alias for "s3Binary"'  # V1
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'packagebuilder' --description 'Handle build requests in Package Builder'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'pb' --description 'Alias for "packagebuilder"'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'majorversion' --description 'Modify package major versions'
   __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'mv' --description 'Alias for "majorversion"'
+  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'setup' --description 'Set common preferences'  # V2
   __brazil_complete $compile -c brazil -x -n '__brazil_nc1' -a 'help' --description 'Help using brazil'
-  __brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'branch' --description 'Create and delete branches'
+  #__brazil_complete $compile -c brazil -f -n '__brazil_nc1' -a 'branch' --description 'Create and delete branches'  # V1
 
-  for cmd in workspace ws versionset vs s3Binary s3 packagebuilder pb package pkg majorversion mv branch
+  for cmd in workspace ws versionset vs s3 packagebuilder pb package pkg majorversion mv
     __brazil_complete_help1 $compile $cmd
   end
 
-  __brazil_complete_action $compile workspace attachenvironment 'Attach an environment for override'
-  __brazil_complete_action $compile workspace checkout 'Checkout a snapshot into the current workspace'
-  __brazil_complete_action $compile workspace clean 'Remove all build artifacts from the workspace'
-  __brazil_complete_action $compile workspace clone 'Make a new workspace based on a snapshot'
-  __brazil_complete_action $compile workspace create 'Create a new workspace'
-  __brazil_complete_action $compile workspace delete 'Delete an existing workspace'
-  __brazil_complete_action $compile workspace detachenvironment 'Detach an environment for overrides'
-  __brazil_complete_action $compile workspace dryrun 'Submit dry-run build of local code to PackageBuilder'
-  __brazil_complete_action $compile workspace list 'Show the present status of the workspace'
-  __brazil_complete_action $compile workspace merge 'Merge from the tracking versionset'
-  __brazil_complete_action $compile workspace pull 'Pull all git packages in the workspace'
-  __brazil_complete_action $compile workspace push 'Push all snapshotable packages to GitFarm'
-  __brazil_complete_action $compile workspace remove 'Remove a package from an existing workspace'
+  __brazil_complete_help1 $compile s3binary  # V2
+  __brazil_complete_help1 $compile setup  # V2
+  #__brazil_complete_help1 $compile s3Binary  # V1
+  #__brazil_complete_help1 $compile branch  # V1
+
+  __brazil_complete_action $compile workspace checkout 'Checkout snapshot into workspace'
+  __brazil_complete_action $compile workspace clean 'Remove all build artifacts from workspace'
+  __brazil_complete_action $compile workspace clone 'Clone new workspace from snapshot'
+  __brazil_complete_action $compile workspace create 'Create new workspace'
+  __brazil_complete_action $compile workspace delete 'Delete existing workspace'
+  __brazil_complete_action $compile workspace dryrun 'Submit dry-run build of local code'
+  __brazil_complete_action $compile workspace env 'Configure Apollo environment overrides'  # V2
+  __brazil_complete_action $compile workspace merge 'Merge from tracking versionset'
+  __brazil_complete_action $compile workspace remove 'Remove packages from workspace'
   __brazil_complete_action $compile workspace show 'Display a summary of the current workspace'
   __brazil_complete_action $compile workspace snapshot 'Upload a snapshot of the workspace'
   __brazil_complete_action $compile workspace sync 'Sync metadata in an existing workspace'
-  __brazil_complete_action $compile workspace transmogrify 'Run transmogrifier transforms on packages'
-  __brazil_complete_action $compile workspace use 'Use a package or version set in an existing workspace'
+  __brazil_complete_action $compile workspace use 'Use package or version set in workspace'
+  # V1 commands removed in V2
+  #__brazil_complete_action $compile workspace attachenvironment 'Attach an environment for override'
+  #__brazil_complete_action $compile workspace detachenvironment 'Detach an environment for overrides'
+  #__brazil_complete_action $compile workspace list 'Show the present status of the workspace'
+  #__brazil_complete_action $compile workspace pull 'Pull all git packages in the workspace'
+  #__brazil_complete_action $compile workspace push 'Push all snapshotable packages to GitFarm'
+  #__brazil_complete_action $compile workspace transmogrify 'Run transmogrifier transforms on packages'
 
   __brazil_complete_action $compile versionset addflavors 'Add flavors to a version set'
   __brazil_complete_action $compile versionset addplatforms 'Add platforms to a version set'
@@ -425,11 +435,17 @@ function __brazil_completions
   __brazil_complete_action $compile versionset revive 'Revive a deprecated or expired version set'
   __brazil_complete_action $compile versionset setvfidependencytype 'Set the VFI dependency type to use'
 
-  __brazil_complete_action $compile s3Binary upload 'Upload a file to s3'
-  __brazil_complete_action $compile s3Binary download 'Download a file from S3'
-  __brazil_complete_action $compile s3Binary history 'List revisions of a key in S3'
+  __brazil_complete_action $compile s3binary upload 'Upload a file to s3'
+  __brazil_complete_action $compile s3binary download 'Download a file from S3'
+  __brazil_complete_action $compile s3binary history 'List revisions of a key in S3'
 
-  __brazil_complete_action $compile branch list 'List branches of a package known to Brazil'
+  # V1 only
+  #__brazil_complete_action $compile s3Binary upload 'Upload a file to s3'
+  #__brazil_complete_action $compile s3Binary download 'Download a file from S3'
+  #__brazil_complete_action $compile s3Binary history 'List revisions of a key in S3'
+
+  # V1 only
+  #__brazil_complete_action $compile branch list 'List branches of a package known to Brazil'
 
   __brazil_complete_action $compile packagebuilder build 'Submit a build request to PackageBuilder'
   __brazil_complete_action $compile packagebuilder delete 'Delete a build request in PackageBuilder'
@@ -437,6 +453,8 @@ function __brazil_completions
 
   __brazil_complete_action $compile majorversion removefromlive "Remove major versions from the 'live' version set"
   __brazil_complete_action $compile majorversion setmasterversionset "Set a package major version's master version set"
+
+  __brazil_complete_action $compile setup platform-support "Set a package major version's master version set"
 
   __brazil_complete_arg_vars $compile workspace use --version -v --branch -b --versionset -vs --package -p --root -r --eventId -eid --cln --layout --majorversion
   __brazil_complete_action_opt $compile workspace use 'latestVersion' +desc 'Use highest version of packages in the active version set' +once +f
@@ -484,13 +502,15 @@ function __brazil_completions
   __brazil_complete_arg_vars_single $compile workspace clean --root -r
   __brazil_complete_action_opt $compile workspace clean 'root' +short 'r' +desc 'Root of workspace to use' +once +f #:directory:_dirs
 
-  __brazil_complete_arg_vars $compile workspace detachenvironment --root -r --alias
-  __brazil_complete_action_opt $compile workspace detachenvironment 'root' +short 'r' +desc 'Root of workspace to use' +once +f #:directory:_dirs
-  __brazil_complete_action_opt $compile workspace detachenvironment 'alias' +desc 'Apollo environment alias to detach' +once +f #:environment name:_complete_local_environments
+  # V1 only
+  #__brazil_complete_arg_vars $compile workspace detachenvironment --root -r --alias
+  #__brazil_complete_action_opt $compile workspace detachenvironment 'root' +short 'r' +desc 'Root of workspace to use' +once +f #:directory:_dirs
+  #__brazil_complete_action_opt $compile workspace detachenvironment 'alias' +desc 'Apollo environment alias to detach' +once +f #:environment name:_complete_local_environments
 
-  __brazil_complete_arg_vars $compile workspace attachenvironment --root -r --alias
-  __brazil_complete_action_opt $compile workspace attachenvironment 'root' +short 'r' +desc 'Root of workspace to use' +once +f #:directory:_dirs
-  __brazil_complete_action_opt $compile workspace attachenvironment 'alias' +desc 'Apollo environment alias to attach' +once +f #:environment name:_complete_local_environments
+  # V1 only
+  #__brazil_complete_arg_vars $compile workspace attachenvironment --root -r --alias
+  #__brazil_complete_action_opt $compile workspace attachenvironment 'root' +short 'r' +desc 'Root of workspace to use' +once +f #:directory:_dirs
+  #__brazil_complete_action_opt $compile workspace attachenvironment 'alias' +desc 'Apollo environment alias to attach' +once +f #:environment name:_complete_local_environments
 
   __brazil_complete_arg_vars $compile workspace dryrun --package -p --description -d --root -r --compute-profile
   __brazil_complete_action_opt $compile workspace dryrun 'package' +short 'p' +desc 'Name of specific packages to build' +f
@@ -519,32 +539,36 @@ function __brazil_completions
   __brazil_complete_action_opt $compile workspace merge 'notDryRun' +short 'ndr' +desc 'Make changes to your version set' +once +f
   __brazil_complete_action_opt $compile workspace merge 'importVfi' +desc 'Import VFI for non-dry-run merge' +once +f
 
-  __brazil_complete_arg_vars $compile workspace transmogrify --package -p --root -r --label -l
-  __brazil_complete_action_opt $compile workspace transmogrify 'root' +short 'r' +desc 'Root folder in a workspace on which to operate' +once +f
-  __brazil_complete_action_opt $compile workspace transmogrify 'package' +short 'p' +desc 'Package to be transformed' +once +f
-  __brazil_complete_action_opt_packages $compile workspace transmogrify +lastany --package -p
-  __brazil_complete_action_opt $compile workspace transmogrify 'label' +short 'l' +desc 'Label of the transform to be applied' +once +f
+  # V1 only
+  #__brazil_complete_arg_vars $compile workspace transmogrify --package -p --root -r --label -l
+  #__brazil_complete_action_opt $compile workspace transmogrify 'root' +short 'r' +desc 'Root folder in a workspace on which to operate' +once +f
+  #__brazil_complete_action_opt $compile workspace transmogrify 'package' +short 'p' +desc 'Package to be transformed' +once +f
+  #__brazil_complete_action_opt_packages $compile workspace transmogrify +lastany --package -p
+  #__brazil_complete_action_opt $compile workspace transmogrify 'label' +short 'l' +desc 'Label of the transform to be applied' +once +f
 
-  __brazil_complete_arg_vars_single $compile workspace pull --rebase
-  __brazil_complete_action_opt $compile workspace pull 'rebase' +desc "Rebase local changes like 'git pull --rebase'" +once +f
+  # V1 only
+  #__brazil_complete_arg_vars_single $compile workspace pull --rebase
+  #__brazil_complete_action_opt $compile workspace pull 'rebase' +desc "Rebase local changes like 'git pull --rebase'" +once +f
 
-  __brazil_complete_arg_vars $compile workspace list --include --exclude
-  __brazil_complete_action_opt $compile workspace list 'include' +desc 'Comma-separated list of packages to include' +once +f
-  __brazil_complete_action_opt_packages $compile workspace list +lastonly --include
-  __brazil_complete_action_opt $compile workspace list 'exclude' +desc 'Comma-separated list of packages to exclude' +once +f
-  __brazil_complete_action_opt_packages $compile workspace list +lastonly --exclude
-  __brazil_complete_action_opt $compile workspace list 'pull' +desc 'Pull changes before doing anything' +once +f
+  # V1 only
+  #__brazil_complete_arg_vars $compile workspace list --include --exclude
+  #__brazil_complete_action_opt $compile workspace list 'include' +desc 'Comma-separated list of packages to include' +once +f
+  #__brazil_complete_action_opt_packages $compile workspace list +lastonly --include
+  #__brazil_complete_action_opt $compile workspace list 'exclude' +desc 'Comma-separated list of packages to exclude' +once +f
+  #__brazil_complete_action_opt_packages $compile workspace list +lastonly --exclude
+  #__brazil_complete_action_opt $compile workspace list 'pull' +desc 'Pull changes before doing anything' +once +f
 
   __brazil_complete_arg_vars $compile workspace snapshot --include --exclude
   __brazil_complete_action_opt $compile workspace snapshot 'include' +desc 'Comma-separated list of packages to include' +once +f
   __brazil_complete_action_opt $compile workspace snapshot 'exclude' +desc 'Comma-separated list of packages to exclude' +once +f
   __brazil_complete_action_opt $compile workspace snapshot 'pull' +desc 'Pull changes before doing anything' +once +f
 
-  __brazil_complete_arg_vars $compile workspace push --include --exclude
-  __brazil_complete_action_opt $compile workspace push 'include' +desc 'Comma-separated list of packages to include' +once +f
-  __brazil_complete_action_opt $compile workspace push 'exclude' +desc 'Comma-separated list of packages to exclude' +once +f
-  __brazil_complete_action_opt $compile workspace push 'pull' +desc 'Pull changes before doing anything' +once +f
-  __brazil_complete_action_opt $compile workspace push 'tags' +desc 'Push all local tags along with the content' +once +f
+  # V1 only
+  #__brazil_complete_arg_vars $compile workspace push --include --exclude
+  #__brazil_complete_action_opt $compile workspace push 'include' +desc 'Comma-separated list of packages to include' +once +f
+  #__brazil_complete_action_opt $compile workspace push 'exclude' +desc 'Comma-separated list of packages to exclude' +once +f
+  #__brazil_complete_action_opt $compile workspace push 'pull' +desc 'Pull changes before doing anything' +once +f
+  #__brazil_complete_action_opt $compile workspace push 'tags' +desc 'Push all local tags along with the content' +once +f
 
   # Both $compile 'workspace clone' and 'workspace checkout' take only a single, unnamed parameter. (Thanks for the consistency, Brazil.)
 
@@ -733,27 +757,45 @@ function __brazil_completions
   __brazil_complete_action_opt $compile versionset setvfidependencytype 'type' +short 't' +desc 'VFI dependency type to use' +once +f
   __brazil_complete_action_opt $compile versionset setvfidependencytype +a "$all_deptypes" +desc 'Dependency type' +lastany --type -t +f
 
-  __brazil_complete_arg_vars $compile s3Binary upload --key -k --file -f
-  __brazil_complete_action_opt $compile s3Binary upload 'key' +short 'k' +desc 'S3 destination key' +once +f
-  __brazil_complete_action_opt $compile s3Binary upload 'file' +short 'f' +desc 'File to upload' +once +f #:file:_files
-  __brazil_complete_action_opt $compile s3Binary upload 'force' +desc 'Create new keys without prompting' +once +f
+  __brazil_complete_arg_vars $compile s3binary upload --key -k --file -f
+  __brazil_complete_action_opt $compile s3binary upload 'key' +short 'k' +desc 'S3 destination key' +once +f
+  __brazil_complete_action_opt $compile s3binary upload 'file' +short 'f' +desc 'File to upload' +once +f #:file:_files
+  __brazil_complete_action_opt $compile s3binary upload 'force' +desc 'Create new keys without prompting' +once +f
 
-  __brazil_complete_arg_vars $compile s3Binary download --key -k --file -f --revision -r
-  __brazil_complete_action_opt $compile s3Binary download 'key' +short 'k' +desc 'S3 key to download' +once +f
-  __brazil_complete_action_opt $compile s3Binary download 'file' +short 'f' +desc 'Destination filename' +once +f #:file:_files
-  __brazil_complete_action_opt $compile s3Binary download 'revision' +short 'r' +desc 'Revision to download' +once +f
-  __brazil_complete_action_opt $compile s3Binary download 'force' +desc 'Overwrite existing files without prompting' +once +f
+  __brazil_complete_arg_vars $compile s3binary download --key -k --file -f --revision -r
+  __brazil_complete_action_opt $compile s3binary download 'key' +short 'k' +desc 'S3 key to download' +once +f
+  __brazil_complete_action_opt $compile s3binary download 'file' +short 'f' +desc 'Destination filename' +once +f #:file:_files
+  __brazil_complete_action_opt $compile s3binary download 'revision' +short 'r' +desc 'Revision to download' +once +f
+  __brazil_complete_action_opt $compile s3binary download 'force' +desc 'Overwrite existing files without prompting' +once +f
 
-  __brazil_complete_arg_vars_single $compile s3Binary history --key -k
-  __brazil_complete_action_opt $compile s3Binary history 'key' +short 'k' +desc 'S3 key to query' +once +f
+  __brazil_complete_arg_vars_single $compile s3binary history --key -k
+  __brazil_complete_action_opt $compile s3binary history 'key' +short 'k' +desc 'S3 key to query' +once +f
 
   # Don't forget to re-add the commands that you added that were missing to the parent command completions
 
-  __brazil_complete_arg_vars_skipfirst $compile branch list --includeDeprecated --package -p
-  __brazil_complete_action_opt $compile branch list 'package' +short 'p' +desc 'Package name' +once +f
-  __brazil_complete_action_opt_packages $compile branch list +lastany --package -p
-  __brazil_complete_action_opt $compile branch list 'includeDeprecated' +desc 'List deprecated branches' +once +f +ex --noIncludeDeprecated
-  __brazil_complete_action_opt $compile branch list 'noIncludeDeprecated' +desc "Don't list deprecated branches" +once +f +ex --includeDeprecated
+  # V1 only
+  #__brazil_complete_arg_vars $compile s3Binary upload --key -k --file -f
+  #__brazil_complete_action_opt $compile s3Binary upload 'key' +short 'k' +desc 'S3 destination key' +once +f
+  #__brazil_complete_action_opt $compile s3Binary upload 'file' +short 'f' +desc 'File to upload' +once +f #:file:_files
+  #__brazil_complete_action_opt $compile s3Binary upload 'force' +desc 'Create new keys without prompting' +once +f
+
+  # V1 only
+  #__brazil_complete_arg_vars $compile s3Binary download --key -k --file -f --revision -r
+  #__brazil_complete_action_opt $compile s3Binary download 'key' +short 'k' +desc 'S3 key to download' +once +f
+  #__brazil_complete_action_opt $compile s3Binary download 'file' +short 'f' +desc 'Destination filename' +once +f #:file:_files
+  #__brazil_complete_action_opt $compile s3Binary download 'revision' +short 'r' +desc 'Revision to download' +once +f
+  #__brazil_complete_action_opt $compile s3Binary download 'force' +desc 'Overwrite existing files without prompting' +once +f
+
+  # V1 only
+  #__brazil_complete_arg_vars_single $compile s3Binary history --key -k
+  #__brazil_complete_action_opt $compile s3Binary history 'key' +short 'k' +desc 'S3 key to query' +once +f
+
+  # V1 only
+  #__brazil_complete_arg_vars_skipfirst $compile branch list --includeDeprecated --package -p
+  #__brazil_complete_action_opt $compile branch list 'package' +short 'p' +desc 'Package name' +once +f
+  #__brazil_complete_action_opt_packages $compile branch list +lastany --package -p
+  #__brazil_complete_action_opt $compile branch list 'includeDeprecated' +desc 'List deprecated branches' +once +f +ex --noIncludeDeprecated
+  #__brazil_complete_action_opt $compile branch list 'noIncludeDeprecated' +desc "Don't list deprecated branches" +once +f +ex --includeDeprecated
 
   __brazil_complete_arg_vars $compile packagebuilder build --versionset -vs --notify --package -pkg --releaseNotes -desc --majorVersion -mv --changeId -cln --branch --impact --platforms
   __brazil_complete_action_opt $compile packagebuilder build 'versionset' +short 'vs' +desc 'Version set name' +once +f
