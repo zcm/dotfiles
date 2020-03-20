@@ -36,6 +36,16 @@ function __brazil_nc3
   return 1
 end
 
+function __brazil_nc4
+  set cmd (commandline -opc)
+  if [ (count $cmd) -eq 4 ]
+    if [ (__brazil_resolve_alias $cmd[2]) = $argv[1] -a (__brazil_resolve_alias $cmd[3]) = $argv[2] -a $cmd[4] = $argv[3] ]
+      return 0
+    end
+  end
+  return 1
+end
+
 function __brazil_uc # "Using command" -- shortened for performance also
   set cmd (commandline -opc)
   if [ (count $cmd) -lt 3 ]
@@ -45,6 +55,20 @@ function __brazil_uc # "Using command" -- shortened for performance also
     return 1
   end
   if [ $argv[1] != (__brazil_resolve_alias $cmd[2]) -o \( $argv[2] != $cmd[3] -a "--$argv[2]" != $cmd[3] \) ]
+    return 1
+  end
+  return 0
+end
+
+function __brazil_usc # "Using subcommand"
+  set cmd (commandline -opc)
+  if [ (count $cmd) -lt 4 ]
+    return 1
+  end
+  if [ -z "$cmd[2]" -o -z "$cmd[3]" -o -z "$cmd[4]" ]
+    return 1
+  end
+  if [ $argv[1] != (__brazil_resolve_alias $cmd[2]) -o \( $argv[2] != $cmd[3] -a "--$argv[2]" != $cmd[3] \) -o \( $argv[3] != $cmd[4] -a "--$argv[3]" != $cmd[4] \) ]
     return 1
   end
   return 0
@@ -148,6 +172,10 @@ function __brazil_complete_arg_vars_single
   __brazil_complete $argv[1] -c brazil -x -n "__brazil_uc $argv[2..3]; and __brazil_nd; and __brazil_ex $argv[4..-1]; and not __brazil_last_any $argv[4..-1]" -a "$argv[4]"
 end
 
+function __brazil_complete_sub_arg_vars
+  __brazil_complete $argv[1] -c brazil -x -n "__brazil_usc $argv[2..4]; and __brazil_nd; and not __brazil_last_any $argv[5..-1]" -a "$argv[5..-1]"
+end
+
 function __brazil_complete_help1
   set resolved (__brazil_resolve_alias $argv[2])
   __brazil_complete $argv[1] -c brazil -x -n '__brazil_nc2 help' -a "$argv[2]" --description "Help for \"$resolved\" command"
@@ -157,10 +185,20 @@ function __brazil_complete_help2
   __brazil_complete $argv[1] -c brazil -x -n "__brazil_nc3 help $argv[2]" -a "$argv[3]" --description "Help for $argv[2] \"$argv[3]\" action"
 end
 
+function __brazil_complete_help3
+  __brazil_complete $argv[1] -c brazil -x -n "__brazil_nc4 help $argv[2] $argv[3]" -a "$argv[4]" --description "Help for $argv[2] $argv[3] \"$argv[4]\" subaction"
+end
+
 function __brazil_complete_action
   __brazil_complete $argv[1] -c brazil -f -n "__brazil_nc2 $argv[2]" -a "$argv[3]" --description "$argv[4]"
   __brazil_complete $argv[1] -c brazil -f -n "__brazil_nc2 $argv[2]" -l "$argv[3]" --description "$argv[4]"
   __brazil_complete_help2 $argv[1] $argv[2] $argv[3]
+end
+
+function __brazil_complete_subaction
+  __brazil_complete $argv[1] -c brazil -f -n "__brazil_nc3 $argv[2] $argv[3]" -a "$argv[4]" --description "$argv[5]"
+  __brazil_complete $argv[1] -c brazil -f -n "__brazil_nc3 $argv[2] $argv[3]" -l "$argv[4]" --description "$argv[5]"
+  __brazil_complete_help3 $argv[1] $argv[2] $argv[3] $argv[4]
 end
 
 function __brazil_complete_action_opt_compile
@@ -277,7 +315,15 @@ function __brazil_complete_action_opt_compile
         end
     end
   end
-  set conds "__brazil_uc $cmd $act"
+  if [ "$argv[4]" = '+sub' ]  # For subcommands
+    set conds "__brazil_usc $cmd $act $long"
+    set has_sub 0
+    set sub "$argv[5]"
+    set -e argv[3..4]
+  else
+    set conds "__brazil_uc $cmd $act"
+    set has_sub 1
+  end
   if [ $has_excludes -eq 0 ]
     set conds "$conds; and __brazil_ex $excludes"
   end
@@ -315,6 +361,8 @@ function __brazil_complete_action_opt_compile
   else if [ "$argv[3]" = '+ac' ]
     set has_ac 0
     set arglist $argv[4]
+  else if [ $has_sub -eq 0 ]
+    set params $params -l $sub
   else
     set params $params -l $long
   end
@@ -347,7 +395,11 @@ function __brazil_complete_action_opt
 end
 
 function __brazil_complete_action_opt_packages
-  __brazil_complete_action_opt $argv[1] $argv[2] $argv[3] +ac "__amazon_complete_packages" +desc 'Brazil package' +x $argv[4..-1]
+  if [ "$argv[5]" = '+sub' ]
+    __brazil_complete_action_opt $argv[1..5] +ac "__amazon_complete_packages" +desc 'Brazil package' +x $argv[6..-1]
+  else
+    __brazil_complete_action_opt $argv[1] $argv[2] $argv[3] +ac "__amazon_complete_packages" +desc 'Brazil package' +x $argv[4..-1]
+  end
 end
 
 function __brazil_complete_action_opt_versionsets
@@ -413,6 +465,10 @@ function __brazil_completions
   #__brazil_complete_action $compile workspace pull 'Pull all git packages in the workspace'
   #__brazil_complete_action $compile workspace push 'Push all snapshotable packages to GitFarm'
   #__brazil_complete_action $compile workspace transmogrify 'Run transmogrifier transforms on packages'
+
+  __brazil_complete_subaction $compile workspace env attach 'Attach to an Apollo environment'
+  __brazil_complete_subaction $compile workspace env detach 'Detact from an Apollo environment'
+  __brazil_complete_subaction $compile workspace env update 'Update attached Apollo environments'
 
   __brazil_complete_action $compile versionset addflavors 'Add flavors to a version set'
   __brazil_complete_action $compile versionset addplatforms 'Add platforms to a version set'
@@ -521,6 +577,32 @@ function __brazil_completions
   __brazil_complete_action_opt $compile workspace dryrun 'git-head' +desc 'Rebuild all consumer packages' +once +f +ex --git-head
   __brazil_complete_action_opt $compile workspace dryrun 'compute-profile' +desc 'Rebuild all consumer packages' +once +f +ex --compute-profile
   __brazil_complete_action_opt $compile workspace dryrun 'rebuild-package-only' +short 'z' +desc 'Rebuild all consumer packages' +once +f +ex --rebuild-package-only -z --unoptimized -unopt
+
+  __brazil_complete_sub_arg_vars $compile workspace env attach --alias --clean --activate --package -p --proxy --help --root -r
+  __brazil_complete_action_opt $compile workspace env attach +sub 'alias' +desc 'Alias of Apollo environment' +once +f
+  __brazil_complete_action_opt $compile workspace env attach +sub 'clean' +desc 'Remove all overrides first' +once +f
+  __brazil_complete_action_opt $compile workspace env attach +sub 'activate' +desc 'Create deployment after overriding' +once +f
+  __brazil_complete_action_opt $compile workspace env attach +sub 'package' +short 'p' +desc 'Packages for environment override' +f
+  __brazil_complete_action_opt_packages $compile workspace env attach +sub +lastany --package -p
+  __brazil_complete_action_opt $compile workspace env attach +sub 'proxy' +desc 'Auxiliary host for proxy commands' +once +f
+  __brazil_complete_action_opt $compile workspace env attach +sub 'help' +desc 'Help for \"attach\" subcommand' +once +f
+  __brazil_complete_action_opt $compile workspace env attach +sub 'root' +short 'r' +desc 'Root of workspace' +once +f
+
+  __brazil_complete_sub_arg_vars $compile workspace env detach --alias --force --clean --activate --proxy --help --root -r
+  __brazil_complete_action_opt $compile workspace env detach +sub 'alias' +desc 'Alias of Apollo environment' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'force' +desc 'Ignore errors' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'clean' +desc 'Remove all overrides first' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'activate' +desc 'Create deployment after overriding' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'proxy' +desc 'Auxiliary host for proxy commands' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'help' +desc 'Help for \"attach\" subcommand' +once +f
+  __brazil_complete_action_opt $compile workspace env detach +sub 'root' +short 'r' +desc 'Root of workspace' +once +f
+
+  __brazil_complete_sub_arg_vars $compile workspace env update --alias --activate --proxy --help --root -r
+  __brazil_complete_action_opt $compile workspace env update +sub 'alias' +desc 'Alias of Apollo environment' +once +f
+  __brazil_complete_action_opt $compile workspace env update +sub 'activate' +desc 'Create deployment after overriding' +once +f
+  __brazil_complete_action_opt $compile workspace env update +sub 'proxy' +desc 'Auxiliary host for proxy commands' +once +f
+  __brazil_complete_action_opt $compile workspace env update +sub 'help' +desc 'Help for \"attach\" subcommand' +once +f
+  __brazil_complete_action_opt $compile workspace env update +sub 'root' +short 'r' +desc 'Root of workspace' +once +f
 
   __brazil_complete_arg_vars $compile workspace merge --newPackageMV -np --root -r --packageMissingDependencies -p
   __brazil_complete_action_opt $compile workspace merge 'newPackageMV' +short 'np' +desc 'Name of new major version to add to version set' +f
