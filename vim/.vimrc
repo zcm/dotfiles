@@ -872,6 +872,7 @@ Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-speeddating'
 
 Plug 'dag/vim-fish', { 'for' : ['fish'] }
+Plug 'PProvost/vim-ps1', { 'for' : ['ps1'] }
 
 Plug 'mustache/vim-mustache-handlebars'
 
