@@ -2,8 +2,7 @@
   "vim": {
     "files": [
       "vimfiles",
-      ".vimrc",
-      "..vimrc.un~"
+      ".vimrc"
     ]
   },
   "screen": {
