@@ -35,6 +35,13 @@ parser.add_argument('--clean',
 )
 parser.set_defaults(clean=False)
 
+parser.add_argument('--only',
+    dest = 'only',
+    action = 'append',
+    help = 'situate only the specified packages',
+)
+parser.set_defaults(only=[])
+
 parser.add_argument('-n', '--dry_run',
     dest = 'dry_run',
     action = 'store_true',
@@ -946,8 +953,25 @@ def main():
         'read this package_info from the %s file:' % args.situation_file)
     Log.verbose(str(package_info))
 
-  operations = dict((pkg, process_package(pkg, symmap, package_info))
-                    for pkg in symmap)
+  if not args.only:
+    operations = dict((pkg, process_package(pkg, symmap, package_info))
+                      for pkg in symmap)
+  else:
+    missing = []
+
+    for pkg in args.only:
+      if pkg not in symmap:
+        missing.append(pkg)
+
+    if missing:
+      if len(missing) == 1:
+        Log.fail(f"requested package '{missing[0]}' not in symbol map")
+      else:
+        Log.fail(f'requested packages {missing} not in symbol map')
+      return None
+
+    operations = dict((pkg, process_package(pkg, symmap, package_info))
+                      for pkg in args.only)
 
   Log.info('analyzing...')
   try:
