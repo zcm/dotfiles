@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 from collections import namedtuple
+from functools import reduce
 
 
 parser = argparse.ArgumentParser(
