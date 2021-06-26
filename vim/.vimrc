@@ -55,9 +55,7 @@ if has('vim_starting')
       sil! set gfn=ProggySquareTT\ 12
       sil! set gfn=PragmataPro\ 10
     elseif has("gui_win32")
-      sil! set gfn=Consolas
-      sil! set gfn=ProggySquareTT:h12
-      sil! set gfn=PragmataPro:h10
+      sil! set gfn=Iosevka_Fixed_Medium:h9:w6
     endif
   endif
 endif
