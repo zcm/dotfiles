@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 # Written by Zachary Murray (dremelofdeath) on 11/04/2013.
-# Your right to steal this is reserved. <3
 
 import argparse
 import base64
@@ -18,7 +17,7 @@ from collections import namedtuple
 
 parser = argparse.ArgumentParser(
     description = 'Intelligently links your dotfiles to your home directory.',
-    epilog = 'Written by Zachary Murray (dremelofdeath). Yours to steal and love.',
+    epilog = 'Written by Zachary Murray (zcm).',
 )
 
 parser.add_argument('-v', '--verbose',
@@ -896,10 +895,6 @@ def main():
 
   if colors_disabled:
     bcolors.disable()
-
-  Log.info('situate.py -- written by Zachary Murray (dremelofdeath)')
-  Log.info('great artists steal: the stealable way to rock your dotfiles(tm)')
-  Log.info('')
 
   # On Windows, we need to verify first that we are elevated because symlinks
   # can't be created without administrator privileges.
