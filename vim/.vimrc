@@ -884,6 +884,9 @@ Plug 'leafgarland/typescript-vim'
 Plug 'Quramy/tsuquyomi', { 'for' : ['typescript'] }
 Plug 'Quramy/vim-js-pretty-template', { 'on': [ 'JsPreTmpl' ], 'for' : ['dart', 'javascript', 'typescript'] }
 
+let g:longlines_margin = 0
+Plug 'zcm/vim-longlines'  " Plug 'embear/vim-longlines'
+
 if has('autocmd')
   aug ZCM_JsPrettyTemplate
     au FileType dart,javascript,typescript JsPreTmpl
