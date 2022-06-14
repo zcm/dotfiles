@@ -1099,11 +1099,9 @@ if has("gui_running")
       call NotepadWindowSize(1)
     endif
   elseif has("gui_win32")
-    " screw it, on windows we just maximize
-    " NOT TODAY! --zack, on Windows 7 (uncomment to enable automaximiz3e)
-    " aug zcm_windows_maximize
-    " au zcm_windows_maximize GUIEnter * simalt ~x
-    " aug END
+    if v:version > 801 || v:version == 801 && has('patch2257')
+      set scrollfocus  " Make Windows GUI scrolling behave like other platforms
+    endif
 
     " and start from our My Documents (or other home) directory if starting
     " without a filename (i.e., a new instance with a blank buffer)
