@@ -877,6 +877,7 @@ Plug 'tpope/vim-speeddating'
 
 Plug 'dag/vim-fish', { 'for' : ['fish'] }
 Plug 'PProvost/vim-ps1', { 'for' : ['ps1'] }
+Plug 'krayon/vim-creole', { 'for' : ['creole'] }  " Note: is a fork
 
 Plug 'mustache/vim-mustache-handlebars'
 
