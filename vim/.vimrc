@@ -993,6 +993,7 @@ if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
   end
 
   Plug 'jeroenbourgois/vim-actionscript', { 'for' : ['actionscript'] }
+  Plug 'habamax/vim-godot', { 'for' : 'gdscript' }
 endif
 
 call plug#end()
