@@ -790,10 +790,14 @@ Plug 'tpope/vim-scriptease'
 Plug 'tpope/vim-dispatch'
 Plug 'tpope/vim-fugitive'
 Plug 'tpope/vim-speeddating'
+Plug 'tpope/vim-surround'
 
 Plug 'dag/vim-fish', { 'for' : ['fish'] }
 Plug 'PProvost/vim-ps1', { 'for' : ['ps1'] }
 Plug 'krayon/vim-creole', { 'for' : ['creole'] }  " Note: is a fork
+
+let g:python_highlight_all = 1
+Plug 'wmvanvliet/python-syntax'  " Note: fork of vim-python/python-syntax
 
 Plug 'mustache/vim-mustache-handlebars'
 
