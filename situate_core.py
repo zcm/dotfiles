@@ -842,7 +842,7 @@ def check_windows_elevation():
       # Newer detection method that definitely works on Windows 8.1.
       try:
         temp = os.listdir(
-            os.sep.join([os.environ.get('SystemRoot','C:\windows'),'temp']))
+            os.sep.join([os.environ.get('SystemRoot', r'C:\windows'), 'temp']))
       except:
         probably_fine = False
 
