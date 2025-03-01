@@ -204,11 +204,9 @@ endfunction
 let MICROSOFT_CORP_SPECIFIC=0
 let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
-let AGILYSYS_CORP_SPECIFIC=0
 
 if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
   " this is getting out of hand... this might be nice to move into a 'company detector' module...
-  let AGILYSYS_CORP_SPECIFIC=filereadable(s:stdhome . "/.vimrc_agilysys")
 
   function! CheckRunningAtGoogle()
     let l:domain_match=0
@@ -955,8 +953,6 @@ else
             \ 'the CheckstyleAntBuildLogic package is not in your workspace')
         let s:use_default_zack_checks = 1
       endif
-    elseif AGILYSYS_CORP_SPECIFIC
-      let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/agilysys_checks.xml"
     else
       let s:use_default_zack_checks = 1
     endif
@@ -1132,13 +1128,6 @@ if has("gui_running")
   else
     " If we don't have any idea what is going on or where we are...
     call NotepadWindowSize(1)
-  endif
-
-  " I'm pretty sure that the correct thing to do here is to check
-  " companies/location first, then platforms, then companies again, but that's
-  " not what's happening right now. So that's why this check is here.
-  if AGILYSYS_CORP_SPECIFIC
-    call JavaNotepadWindowSize(1)
   endif
 else
   " Only override the mouse settings if we're not in the GUI.
@@ -1330,9 +1319,7 @@ endif
 set stl+=\ [%{&fenc==\"\"?&enc:&fenc}%{(exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\"}]%h%m%r
 set stl+=%=%-14.(%l,%c%V%)\ %P
 
-if AGILYSYS_CORP_SPECIFIC
-  set tw=120
-elseif AMAZON_CORP_SPECIFIC
+if AMAZON_CORP_SPECIFIC
   set tw=120
 else
   if MICROSOFT_CORP_SPECIFIC != 1
