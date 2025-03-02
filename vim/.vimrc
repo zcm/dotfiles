@@ -202,7 +202,6 @@ function! RecalculatePluginSplitHeight()
 endfunction
 
 let MICROSOFT_CORP_SPECIFIC=0
-let AMAZON_CORP_SPECIFIC=0
 let GOOGLE_CORP_SPECIFIC=0
 
 if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
@@ -223,76 +222,7 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
     return l:domain_match
   endfunction
 
-  function! CheckRunningAtAmazon()
-    if has('ruby') && (
-          \ filereadable($HOME.'/.'.R13(
-          \ 'gbby'.R13('box/').'ova'.'/oen'.R13('zil')))
-          \ || filereadable(R13(
-          \ '/ncb'.R13('llo/env/').'FQRG'.R13('ools/').'ova'.'/oen'.R13('zil')))
-          \ || filereadable(R13(
-          \ '/ncb'.R13('llo/env/').'FQRG'.R13('ools/').'ova'.'/nc'.R13('ollo')))
-          \ )
-      return 1
-    endif
-
-    let l:domain_match = 0
-    if has("unix")
-      let l:hostname = $HOSTNAME
-
-      if (l:hostname == "")
-        let l:hostname = hostname()
-      endif
-
-      let l:pattern = "[a-zA-Z0-9_\\-]\\+\\."
-      let l:domain = substitute(l:hostname, l:pattern, "", "")
-
-      let l:domain_match =
-        \ l:domain == "desktop.amazon.com" || l:domain == "ant.amazon.com"
-    endif
-    return l:domain_match
-  endfunction
-
-  if(CheckRunningAtAmazon())
-    let AMAZON_CORP_SPECIFIC=1
-    " Just take the runtime hooks. (Edit: No, don't even do this. Avoid loading
-    " these ancient plugins AT ALL COSTS.)
-    "if filereadable("/apollo/env/envImprovement/var/vimruntimehook")
-      " Before sourcing Amazon's runtime hook, set a hack to avoid loading
-      " SuperTab, which is pretty much the worst because it conflicts with
-      " NeoComplCache.
-      "let complType="DO_NOT_USE_EVER"
-      " Just get rid of most/all of the plugins. I never use them and they're
-      " annoying.
-      "let loaded_bufexplorer=1
-      "so /apollo/env/envImprovement/var/vimruntimehook
-      "set rtp+=~/vimfiles,~/vimfiles/after
-    "endif
-    " Instead, do this customized load to get everything but the plugins:
-    let g:ApolloRoot = "/apollo/env/envImprovement"
-    set rtp+=$HOME/.vim
-    set rtp+=/apollo/env/envImprovement/vim/amazon/brazil-config
-    set rtp+=/apollo/env/envImprovement/vim/amazon/brazil_inc_path
-    set rtp+=/apollo/env/envImprovement/vim/amazon/dat
-    set rtp+=/apollo/env/envImprovement/vim/amazon/FLLog
-    set rtp+=/apollo/env/envImprovement/vim/amazon/ion
-    set rtp+=/apollo/env/envImprovement/vim/amazon/mail-after
-    set rtp+=/apollo/env/envImprovement/vim/amazon/mosel
-    set rtp+=/apollo/env/envImprovement/vim/amazon/object
-    set rtp+=/apollo/env/envImprovement/vim/amazon/Perforce
-    set rtp+=/apollo/env/envImprovement/vim/amazon/s3
-    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-mason
-    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-perl
-    set rtp+=/apollo/env/envImprovement/vim/amazon/syntax-override-ruby
-    if !RESTRICTED_MODE
-      set rtp+=/apollo/env/envImprovement/vim/amazon/wiki_browser
-    endif
-    "set rtp+=/apollo/env/envImprovement/vim  " <-- evil plugins here
-    set rtp+=$VIMRUNTIME
-    set rtp+=/apollo/env/envImprovement/vim/amazon/mail-after/after
-    "set rtp+=/apollo/env/envImprovement/vim/after  " <-- here too
-    set rtp+=$HOME/.vim/after
-    set rtp+=~/vimfiles,~/vimfiles/after
-  elseif(CheckRunningAtGoogle())
+  if(CheckRunningAtGoogle())
     let GOOGLE_CORP_SPECIFIC=1
     if(!RESTRICTED_MODE && filereadable("/usr/share/vim/google/gtags.vim"))
       function! Google_RecheckGtlistOrientationBounds()
@@ -363,18 +293,6 @@ if !filereadable(s:stdhome . "/.vimrc_skip_company_detection")
   endif
 endif
 
-" Custom undodir settings
-if has("persistent_undo")
-  if has('unix')
-    if AMAZON_CORP_SPECIFIC
-      if !isdirectory(s:stdhome . '/.vim_undo')
-        call mkdir(s:stdhome . '/.vim_undo')
-      endif
-      exe 'set undodir='.s:stdhome.'/.vim_undo'
-    endif
-  endif
-endif
-
 " Other custom directories -- use non-local paths for temp files if possible
 if has("unix")
   set dir=~/tmp//,/var/tmp//,/tmp//,.
@@ -432,7 +350,7 @@ if !RESTRICTED_MODE
 endif
 
 " Find the ctags command
-if (!AMAZON_CORP_SPECIFIC && !GOOGLE_CORP_SPECIFIC)
+if (!GOOGLE_CORP_SPECIFIC)
   if has("unix")
     if filereadable("/opt/local/bin/ctags") " This is the MacPorts case, I think?
       let g:Tlist_Ctags_Cmd = "/opt/local/bin/ctags"
@@ -914,52 +832,9 @@ else
   if filereadable(s:checkstyle_jar)
     let g:syntastic_java_checkers = ['checkstyle']
     let g:syntastic_java_checkstyle_classpath = s:checkstyle_jar
-    let s:use_default_zack_checks = 0
-    if AMAZON_CORP_SPECIFIC && has('unix')
-      let s:amzn_checkstyle_ws = '/workspace/CheckstyleAntBuildLogic/src/CheckstyleAntBuildLogic'
-      let s:amzn_checkfile_dir = s:amzn_checkstyle_ws . '/configuration/antfiles/config/'
-      let s:amzn_checkfile = s:amzn_checkfile_dir . 'checkstyle-rules.xml'
-      let s:amzn_suppressions = s:amzn_checkfile_dir . 'checkstyle-suppressions.xml'
 
-      function! ZCM_UpdateAmazonCheckStyleDirectory()
-        let g:syntastic_java_checkstyle_args = '-Dbasedir="'.getcwd().'"'
-        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.legacypackagedocs=false'
-        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.suppression.filter='
-        let g:syntastic_java_checkstyle_args .= s:amzn_suppressions
-        let g:syntastic_java_checkstyle_args .= ' -Dcheckstyle.linelength=100'
-      endfunction
-
-      if filereadable(s:amzn_checkfile)
-        if filereadable(s:amzn_suppressions)
-          let g:syntastic_check_on_open = 1
-          let g:syntastic_java_checkstyle_conf_file = s:amzn_checkfile
-          " Ignore missing Javadoc. Amazon's checks for this are far too noisy to be practical.
-          let g:syntastic_java_checkstyle_quiet_messages =
-              \ { "regex": '\v(Missing a Javadoc comment)|(Unable to get class information)' }
-          call ZCM_UpdateAmazonCheckStyleDirectory()
-          if has('autocmd')
-            au BufEnter *.java call ZCM_UpdateAmazonCheckStyleDirectory()
-          else
-            echom "Autocommands are mysteriously unavailable. Without them, it will be impossible"
-            echom "to automatically update your basedir property. Fix this and recompile."
-          endif
-        else
-          echom "Amazon's CheckStyle checks are available, but the suppressions file is missing."
-          echom "Using the defaults instead. Maybe the filename changed?"
-          let s:use_default_zack_checks = 1
-        endif
-      else
-      call ExplainFeature(0, 'generic', 'Amazon Checkstyle',
-            \ 'the CheckstyleAntBuildLogic package is not in your workspace')
-        let s:use_default_zack_checks = 1
-      endif
-    else
-      let s:use_default_zack_checks = 1
-    endif
     " This is the fallback for if everything else is missing for some reason.
-    if s:use_default_zack_checks
-      let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/zack_checks.xml"
-    endif
+    let g:syntastic_java_checkstyle_conf_file = s:vimfiles_dir . "/etc/zack_checks.xml"
   endif
 endif
 
@@ -971,9 +846,7 @@ endif
 let g:syntastic_check_on_wq = 0
 
 if !RESTRICTED_MODE
-  if !AMAZON_CORP_SPECIFIC
-    Plug 'scrooloose/syntastic'
-  endif
+  Plug 'scrooloose/syntastic'
 
   if !GOOGLE_CORP_SPECIFIC
     " Google has their own settings for this.
@@ -981,7 +854,7 @@ if !RESTRICTED_MODE
   endif
 endif
 
-if !GOOGLE_CORP_SPECIFIC && !AMAZON_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
+if !GOOGLE_CORP_SPECIFIC && !MICROSOFT_CORP_SPECIFIC
   if has('python') || has('python3')
     Plug 'jdonaldson/vaxe', { 'for' : ['haxe', 'hss', 'hxml'] }
   else
@@ -1091,9 +964,6 @@ if has("gui_running")
         set columns=154
         winp 0 0
       endif
-    elseif AMAZON_CORP_SPECIFIC
-      call BaseNotepadWindowSize(130, 1)
-    else
       call NotepadWindowSize(1)
     endif
   elseif has("gui_win32")
@@ -1301,12 +1171,6 @@ set encoding=utf-8
 set ts=2
 set sw=2
 
-if AMAZON_CORP_SPECIFIC
-  set ts=4
-  set sw=4
-  au BufNewFile,BufRead *.fish setlocal ts=2 | setlocal sw=2
-endif
-
 " always show the status line
 set ls=2
 set stl=%<%f\ #%{changenr()}
@@ -1319,12 +1183,8 @@ endif
 set stl+=\ [%{&fenc==\"\"?&enc:&fenc}%{(exists(\"+bomb\")\ &&\ &bomb)?\",B\":\"\"}]%h%m%r
 set stl+=%=%-14.(%l,%c%V%)\ %P
 
-if AMAZON_CORP_SPECIFIC
-  set tw=120
-else
-  if MICROSOFT_CORP_SPECIFIC != 1
-    set tw=80
-  endif
+if MICROSOFT_CORP_SPECIFIC != 1
+  set tw=80
 endif
 
 " only use spaces instead of tabs
