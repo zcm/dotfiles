@@ -534,40 +534,6 @@ if has("dos32") || has("dos16")
   set viminfo+=nC:/VIM72/_viminfo
 endif
 
-" probably like exactly none of this works on win9x...
-if (!RESTRICTED_MODE) && (has("win32") || has("win64")) && !has("win95")
-  function! RunInChainloadBatchFile(cmd)
-    let l:tempbatchfile = fnamemodify(tempname(), ':h') . '\batch.cmd'
-    exe 'redir! > ' . l:tempbatchfile
-    sil echo a:cmd
-    redir END
-    let l:batch_cmd = '"' . l:tempbatchfile . '"'
-    echom "Running in batch file: " . a:cmd
-    call system(l:batch_cmd)
-    if exists('l:tempbatchfile')
-      call delete(l:tempbatchfile)
-    endif
-  endfunction
-
-  function! AttemptToInstallMsysGit()
-    if !executable("git") " Git is not available... we can try to install it maybe?
-      let l:wgetcmd = s:vimfiles_dir . '\bin\wget.exe'
-      if executable(l:wgetcmd)
-        let l:MsysSetupExe = "Git-1.8.1.2-preview20130201.exe"
-        let l:MsysGitUrl = "https://msysgit.googlecode.com/files/" . l:MsysSetupExe
-        let l:Temp = shellescape($TMP)
-        echom "Attempting to fetch " . l:MsysGitUrl . "..."
-        call RunInChainloadBatchFile('"'.l:wgetcmd.'" --no-check-certificate -P '.lTemp.' '.l:MsysGitUrl)
-        echom "Attempting to start setup..."
-        call RunInChainloadBatchFile(shellescape($TMP . '\' . l:MsysSetupExe))
-        if filereadable(l:MsysSetupExe)
-          call delete(l:MsysSetupExe)
-        endif
-      endif
-    endif
-  endfunction
-endif
-
 " This section should be used for custom mappings and personal editor settings,
 " before we start taking changes from our environment (e.g. Google).
 
