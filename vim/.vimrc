@@ -311,14 +311,17 @@ if !RESTRICTED_MODE
     let l:is_exuberant = 0
     " if cases copied from taglist.vim --zack
     if exists('g:Tlist_Ctags_Cmd')
+      if stridx(g:Tlist_Ctags_Cmd, s:vimfiles_dir) >= 0
+        return 1
+      endif
       let l:cmd = g:Tlist_Ctags_Cmd
     elseif executable('exuberant-ctags')
       " On Debian Linux, exuberant ctags is installed
       " as exuberant-ctags
-      let l:cmd = 'exuberant-ctags'
+      return 1
     elseif executable('exctags')
       " On Free-BSD, exuberant ctags is installed as exctags
-      let l:cmd = 'exctags'
+      return 1
     elseif executable('ctags')
       let l:cmd = 'ctags'
     elseif executable('ctags.exe')
