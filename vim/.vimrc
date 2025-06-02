@@ -952,8 +952,8 @@ if has("gui_running")
       endif
     endfunction
 
-    aug ZCM_Windows_StartFreshFromHomeDirectory
-    au ZCM_Windows_StartFreshFromHomeDirectory VimEnter *
+    aug ZCM_Windows_StartFreshDirectory
+    au ZCM_Windows_StartFreshDirectory VimEnter *
         \ sil call ChangeToHomeIfNewInstance()
     aug END
 
@@ -971,6 +971,17 @@ if has("gui_running")
   else
     " If we don't have any idea what is going on or where we are...
     call NotepadWindowSize(1)
+  endif
+
+  if has('win32') || has('win64')
+    function! ChangeToNetworkIfNewInstance()
+      if @% =~# '^\\'
+        cd %:h
+      endif
+    endfunction
+
+    au ZCM_Windows_StartFreshDirectory VimEnter *
+        \ sil call ChangeToNetworkIfNewInstance()
   endif
 else
   " Only override the mouse settings if we're not in the GUI.
